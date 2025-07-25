@@ -2,7 +2,6 @@
 #define PLAYTHING_ENTITY_MANAGER
 
 #include <vector>
-#include <memory>
 
 #include "raylib.h"
 

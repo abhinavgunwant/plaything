@@ -5,7 +5,7 @@
 #include "raylib.h"
 #include "common.hpp"
 
-enum ShapeType {
+enum Shape3DType {
 	SHAPE_CUBE,
 	SHAPE_LINE3D,
 };
@@ -24,14 +24,14 @@ struct LineData {
 	Color color;
 };
 
-union ShapeData {
+union Shape3DData {
 	CubeData cubeData;
 	LineData lineData;
 };
 
 struct Shape3D {
-	ShapeType type;
-	ShapeData shapeData;
+	Shape3DType type;
+	Shape3DData shapeData;
 };
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color);
