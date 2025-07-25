@@ -1,5 +1,5 @@
-#ifndef RAYLIB_TEST_ENTITY_MANAGER
-#define RAYLIB_TEST_ENTITY_MANAGER
+#ifndef PLAYTHING_ENTITY_MANAGER
+#define PLAYTHING_ENTITY_MANAGER
 
 #include <vector>
 #include <memory>

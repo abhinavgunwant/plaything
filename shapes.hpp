@@ -1,5 +1,5 @@
-#ifndef RAYLIB_TEST_SHAPES
-#define RAYLIB_TEST_SHAPES
+#ifndef PLAYTHING_SHAPES
+#define PLAYTHING_SHAPES
 
 #include <string>
 #include "raylib.h"
