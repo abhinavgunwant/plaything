@@ -18,12 +18,13 @@ int main() {
 
     EntityManager em = EntityManager();
 
-    Entity grid = Entity(XAxis());
+    Entity3D grid = Entity3D(XAxis());
     grid.addShape(YAxis());
     grid.addShape(ZAxis());
 
     em.addEntity(Cube(VEC_ZERO, 5.0f, 5.0f, 5.0f, YELLOW));
     em.addEntity(grid);
+    em.addEntity(Text((char *)"Raylib Test", 5, 0, BLACK));
 
     // Main loop
     while (!WindowShouldClose()) {
@@ -48,8 +49,6 @@ int main() {
         ClearBackground(RAYWHITE);
 
         em.drawEntities();
-
-        DrawText("Raylib test", 0, 0, 20, GRAY);
 
         EndDrawing();
     }
