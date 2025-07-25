@@ -1,0 +1,44 @@
+#ifndef RAYLIB_TEST_SHAPES
+#define RAYLIB_TEST_SHAPES
+
+#include <string>
+#include "raylib.h"
+#include "common.hpp"
+
+enum ShapeType {
+	SHAPE_CUBE,
+	SHAPE_LINE3D,
+};
+
+struct CubeData {
+	Vector3 position;
+	float width;
+	float height;
+	float length;
+	Color color;
+};
+
+struct LineData {
+	Vector3 startPos;
+	Vector3 endPos;
+	Color color;
+};
+
+union ShapeData {
+	CubeData cubeData;
+	LineData lineData;
+};
+
+struct Shape3D {
+	ShapeType type;
+	ShapeData shapeData;
+};
+
+Shape3D Cube(Vector3 position, float width, float height, float length, Color color);
+Shape3D Line(Vector3 startPos, Vector3 endPos, Color color);
+Shape3D DefaultCube();
+Shape3D XAxis();
+Shape3D YAxis();
+Shape3D ZAxis();
+
+#endif
