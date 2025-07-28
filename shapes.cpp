@@ -22,6 +22,31 @@ Shape2D Text(char* text, int x, int y, Color color) {
 	return { SHAPE_2D_TEXT, (float)x, (float)y, TextData { text, 20, color } };
 }
 
+Shape2DData dimensionShape(int width, int height, Color color) {
+    Dimension2DData d = { width, height, color };
+    Shape2DData s;
+    s.dimensionData = d;
+    return s;
+}
+
+Shape2D Line2D(int x, int y, int width, int height, Color color) {
+    // Dimension2DData l2d = Dimension2DData { width, height, color };
+    // Shape2DData s2d;
+    // s2d.dimensionData = l2d;
+
+    // return { SHAPE_2D_LINE, (float)x, (float)y, s2d };
+    return { SHAPE_2D_LINE, (float)x, (float)y, dimensionShape(width, height, color) };
+}
+
+Shape2D Rect(int x, int y, int width, int height, Color color) {
+    // Dimension2DData l2d = Dimension2DData { width, height, color };
+    // Shape2DData s2d;
+    // s2d.dimensionData = l2d;
+
+    // return { SHAPE_2D_LINE, (float)x, (float)y, s2d };
+    return { SHAPE_2D_RECTANGLE, (float)x, (float)y, dimensionShape(width, height, color) };
+}
+
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color) {
 	return { SHAPE_3D_CUBE, CubeData { position, width, height, length, color } };
 }
@@ -61,3 +86,37 @@ Shape3D ZAxis() {
 
 	return { SHAPE_3D_LINE, sd };
 }
+
+void shape2DInfo(Shape2D shape) {
+    cout << "\nShape: { type: ";
+
+    switch (shape.type) {
+        case SHAPE_2D_TEXT: {
+            cout << "SHAPE_2D_TEXT, x: " << shape.x << ", y: " << shape.y
+                << ", shapeData: TextData { text: " << shape.shapeData.textData.text
+                << ", fontSize: " << shape.shapeData.textData.fontSize
+                << ", color: TODO: print color"
+                << " } }";
+            break;
+        }
+
+        case SHAPE_2D_LINE: {
+            cout << "SHAPE_2D_LINE, x:" << shape.x << ", y: " << shape.y
+                << ", shapeData: Dimension2DData { width: " << shape.shapeData.dimensionData.width
+                << ", height: " << shape.shapeData.dimensionData.height
+                << ", color: TODO: print color"
+                << " } }";
+            break;
+        }
+
+        case SHAPE_2D_RECTANGLE: {
+            cout << "SHAPE_2D_RECTANGLE, x:" << shape.x << ", y: " << shape.y
+                << ", shapeData: Dimension2DData { width: " << shape.shapeData.dimensionData.width
+                << ", height: " << shape.shapeData.dimensionData.height
+                << ", color: TODO: print color"
+                << " } }";
+            break;
+        }
+    }
+}
+

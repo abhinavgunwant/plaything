@@ -23,7 +23,7 @@ class Entity2D {
 
 		void addShape(Shape2D &shape);
 		void addShape(Shape2D shape);
-		inline uint32_t getId();
+		uint32_t getId();
 };
 
 /**
@@ -49,11 +49,13 @@ class Entity3D {
 
 class EntityManager {
 private:
+	EntityManager* instance = nullptr;
 	uint32_t idCounter;
 	Camera3D camera;
 	vector<Entity3D> entities3d;
 	vector<Entity2D> entities2d;
 	void initCamera();
+    void init();
 
 public:
 	EntityManager();
@@ -67,11 +69,20 @@ public:
 	uint32_t addEntity(Entity2D entity);
 	uint32_t addEntity(Shape2D shape);
 	uint32_t addEntity(Shape2D &shape);
-	Entity3D* get3DEntity(uint32_t id);
-	Entity2D* get2DEntity(uint32_t id);
+	Entity3D get3DEntity(uint32_t id);
+	Entity2D get2DEntity(uint32_t id);
+    void update2DEntity(uint32_t id, Entity2D newEntity);
 	void drawEntities();
 	void draw2D(const Shape2D &shape);
 	void draw3D(const Shape3D &shape);
 };
+
+// EntityManager's Global instance declaration
+extern EntityManager em;
+
+/**
+ * Responsible for setting up entities before the game starts.
+ */
+void setupEntities();
 
 #endif

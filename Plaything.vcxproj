@@ -128,12 +128,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="entity-manager.cpp" />
+    <ClCompile Include="game-state.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="process-inputs.cpp" />
     <ClCompile Include="shapes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.hpp" />
     <ClInclude Include="entity-manager.hpp" />
+    <ClInclude Include="game-state.hpp" />
+    <ClInclude Include="process-inputs.hpp" />
     <ClInclude Include="shapes.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
