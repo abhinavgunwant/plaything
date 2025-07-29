@@ -16,6 +16,7 @@ enum Shape2DType {
     SHAPE_2D_TEXT,
     SHAPE_2D_LINE,
     SHAPE_2D_RECTANGLE,
+    SHAPE_2D_IMAGE,
 };
 
 struct CubeData {
@@ -59,9 +60,16 @@ struct Dimension2DData {
     Color color;
 };
 
+struct ImageData {
+    int width;
+    int height;
+    Texture2D texture;
+};
+
 union Shape2DData {
 	TextData textData;
     Dimension2DData dimensionData;
+    ImageData imageData;
 };
 
 struct Shape2D {
@@ -79,6 +87,7 @@ Shape2D Text(char* text, int x, int y, int fontSize, Color color);
 Shape2D Text(char * text, int x, int y, Color color);
 Shape2D Line2D(int startX, int startY, int endX, int endY, Color color);
 Shape2D Rect(int startX, int startY, int endX, int endY, Color color);
+Shape2D Img(int x, int y, int width, int height, Image invImage);
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color);
 Shape3D Line(Vector3 startPos, Vector3 endPos, Color color);

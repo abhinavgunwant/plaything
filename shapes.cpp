@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 
+#include "common.hpp"
 #include "shapes.hpp"
 
 using namespace std;
@@ -45,6 +46,23 @@ Shape2D Rect(int x, int y, int width, int height, Color color) {
 
     // return { SHAPE_2D_LINE, (float)x, (float)y, s2d };
     return { SHAPE_2D_RECTANGLE, (float)x, (float)y, dimensionShape(width, height, color) };
+}
+
+Shape2D Img(int x, int y, int width, int height, Image invImage) {
+    if (invImage.width != width) {
+        ImageResize(&invImage, width, invImage.height);
+        cout << "\nResizing image width " << invImage.width << " " << width;
+    }
+
+    if (invImage.height != height) {
+        ImageResize(&invImage, invImage.width, height);
+        cout << "\nResizing image height " << invImage.height << " " << height;
+    }
+
+    ImageData i = { width, height, LoadTextureFromImage(invImage) };
+    Shape2DData s;
+    s.imageData = i;
+    return { SHAPE_2D_IMAGE, (float)x, (float)y, s };
 }
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color) {
@@ -115,6 +133,11 @@ void shape2DInfo(Shape2D shape) {
                 << ", height: " << shape.shapeData.dimensionData.height
                 << ", color: TODO: print color"
                 << " } }";
+            break;
+        }
+
+        case SHAPE_2D_IMAGE: {
+            cout << "SHAPE_2D_IMAGE";
             break;
         }
     }

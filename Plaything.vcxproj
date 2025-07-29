@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="entity-manager.cpp" />
     <ClCompile Include="game-state.cpp" />
+    <ClCompile Include="items.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="process-inputs.cpp" />
     <ClCompile Include="shapes.cpp" />
@@ -137,6 +138,7 @@
     <ClInclude Include="common.hpp" />
     <ClInclude Include="entity-manager.hpp" />
     <ClInclude Include="game-state.hpp" />
+    <ClInclude Include="items.hpp" />
     <ClInclude Include="process-inputs.hpp" />
     <ClInclude Include="shapes.hpp" />
   </ItemGroup>
