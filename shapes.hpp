@@ -1,15 +1,12 @@
 #ifndef PLAYTHING_SHAPES
 #define PLAYTHING_SHAPES
 
-#include <string>
 #include "raylib.h"
-#include "common.hpp"
-
-using namespace std;
 
 enum Shape3DType {
 	SHAPE_3D_CUBE,
 	SHAPE_3D_LINE,
+    SHAPE_3D_MESH,
 };
 
 enum Shape2DType {

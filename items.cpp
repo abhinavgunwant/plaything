@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 
+#include "common.hpp"
 #include "entity-manager.hpp"
 #include "shapes.hpp"
 #include "items.hpp"
@@ -18,7 +19,7 @@ Item::Item() {
 
 Item::Item(ItemType type, Image invImage) {
     this->type = type;
-    this->invImageTexture = LoadTextureFromImage(invImage);
+    invImageTexture = LoadTextureFromImage(invImage);
     clip = 0;
     ammo = 0;
     health = 0;
@@ -26,22 +27,26 @@ Item::Item(ItemType type, Image invImage) {
 
 Item::Item(ItemType type) {
     this->type = type;
-    this->invImageTexture = { 0, 0, 0, 0, 0 };
+    invImageTexture = { 0, 0, 0, 0, 0 };
     clip = 0;
     ammo = 0;
     health = 0;
 }
 
+Item::~Item() { }
+
 void Item::onClick() {
     switch (this->type) {
         case ITEM_BLUEPRINT: {
             cout << "\nPlace building unit.";
-            EntityCollision ec = em.getRayCastCollision(ECT_TERRAIN);
+            EntityCollision ec = em.getRayCastCollision(ECT_TERRAIN, 10);
 
             if (ec.entityId != 0 && ec.collision.hit) {
                 Vector3 p = ec.collision.point;
                 p.y -= 0.6;
-                em.addEntity(Cube(p, 2, 2, 2, BLUE));
+                Entity3D foundation(Cube(p, 2, 2, 2, BLUE));
+                foundation.item.type = ITEM_BUILDING_FOUNDATION;
+                em.addEntity(foundation);
             }
 
             break;
@@ -59,15 +64,20 @@ void Item::onClick() {
 
         case ITEM_PISTOL: {
             cout << "\nFire bullet from pistol";
-            EntityCollision ec = em.getRayCastCollision(ECT_OTHER);
+            EntityCollision ec = em.getRayCastCollision(ECT_OTHER, 1000);
 
             Color colors[] = { RED, GREEN, YELLOW, BLUE, ORANGE, PURPLE, BLACK, WHITE };
 
             if (ec.entityId != 0 && ec.collision.hit) {
                 cout << "\nentity got hit!";
-                Entity3D entity = em.get3DEntity(ec.entityId);
 
-                if ((*(entity.shapes.begin())).type == SHAPE_3D_CUBE) {
+                Entity3D entity = em.get3DEntity(ec.entityId);
+                cout << "\nEntity's item type: " << getItemTypeName(entity.item.type);
+
+                if (entity.item.type == ITEM_BUILDING_FOUNDATION) {
+                    cout << "\nDeleting foundation";
+                    em.deleteEntity(ec.entityId);
+                } else if ((*(entity.shapes.begin())).type == SHAPE_3D_CUBE) {
                     Color oldColor = (*(entity.shapes.begin())).shapeData.cubeData.color;
                     Color newColor;
 
@@ -81,6 +91,28 @@ void Item::onClick() {
                 cout << "\nupdating entity";
                 em.update3DEntity(entity.getId(), entity);
             }
+
+            break;
+        }
+
+        case ITEM_FURNACE: {
+            cout << "\nPlace furnace";
+            EntityCollision ec = em.getRayCastCollision(ECT_TERRAIN, 1000);
+
+            if (ec.entityId != 0 && ec.collision.hit) {
+                Entity3D furnaceEntity = Entity3D(em.lastId() + 1, Cube(ec.collision.point, 1, 5, 2, ORANGE));
+                Item furnaceItem = Item(ITEM_FURNACE);
+
+                furnaceItem.itemData.furnace = {
+                    0, { 0, 0 }, { 0, 0, 0 },
+                    { FARM_ITEM_NONE, FARM_ITEM_NONE },
+                    { FARM_ITEM_NONE, FARM_ITEM_NONE, FARM_ITEM_NONE }
+                };
+
+                furnaceEntity.item = furnaceItem;
+                em.addEntity(furnaceEntity);
+            }
+
             break;
         }
 
@@ -114,31 +146,85 @@ void Item::onRightClick() {
     }
 }
 
+void Item::onUse() {
+    cout << "\nInside Item::onUse()";
+    switch (type) {
+        case ITEM_BLUEPRINT: break;
+        case ITEM_HAMMER: break;
+        case ITEM_ASSAULT_RIFLE: break;
+        case ITEM_PISTOL: break;
+        case ITEM_FURNACE: {
+            cout << "\nFurnace { wood: " << itemData.furnace.woodQty
+                << ", ores: { slot1: "
+                << getFarmItemName(itemData.furnace.oreTypes[0])
+                << "(" << itemData.furnace.oreQty[0] << "), slot2: "
+                << getFarmItemName(itemData.furnace.oreTypes[1])
+                << "(" << itemData.furnace.oreQty[0] << ") }"
+                << ", output: { slot1: "
+                << getFarmItemName(itemData.furnace.outputTypes[0])
+                << "(" << itemData.furnace.outputQty[0]
+                << "), slot2: "
+                << getFarmItemName(itemData.furnace.outputTypes[1])
+                << "(" << itemData.furnace.outputQty[1]
+                << "), slot3: "
+                << getFarmItemName(itemData.furnace.outputTypes[2])
+                << "(" << itemData.furnace.outputQty[2]
+                << "), on: " << itemData.furnace.on << " } }";
+            break;
+        }
+        default: return;
+    }
+}
+
 void Item::onKeyPress() {
     switch (this->type) {
-        case ITEM_BLUEPRINT: {
-            break;
-        }
-
-        case ITEM_HAMMER: {
-            break;
-        }
-
+        case ITEM_BLUEPRINT: break;
+        case ITEM_HAMMER: break;
         case ITEM_ASSAULT_RIFLE: {
             if (IsKeyUp(KEY_R)) {
                 cout << "\nReload";
             }
             break;
         }
-
         case ITEM_PISTOL: {
             if (IsKeyDown(KEY_R)) {
                 cout << "\nReload";
             }
             break;
         }
-
+        case ITEM_FURNACE: break;
         default: return;
+    }
+}
+
+string getItemTypeName(ItemType type) {
+    switch (type) {
+        case ITEM_NONE: return "ITEM_NONE";
+        case ITEM_BLUEPRINT: return "";
+        case ITEM_HAMMER: return "ITEM_HAMMER";
+        case ITEM_ASSAULT_RIFLE: return "ITEM_ASSAULT_RIFLE";
+        case ITEM_PISTOL: return "ITEM_PISTOL";
+        case ITEM_FURNACE: return "ITEM_FURNACE";
+        case ITEM_TREE: return "ITEM_TREE";
+        case ITEM_NODE_STONE: return "ITEM_NODE_STONE";
+        case ITEM_NODE_METAL: return "ITEM_NODE_METAL";
+        case ITEM_NODE_SULFUR: return "ITEM_NODE_SULFUR";
+        case ITEM_BUILDING_FOUNDATION: return "ITEM_BUILDING_FOUNDATION";
+        default: return "";
+    }
+}
+
+string getFarmItemName(FarmItemTypes type) {
+    switch (type) {
+        case FARM_ITEM_NONE: return "FARM_ITEM_NONE";
+        case FARM_ITEM_WOOD: return "FARM_ITEM_WOOD";
+        case FARM_ITEM_STONES: return "FARM_ITEM_STONES";
+        case FARM_ITEM_METAL_ORE: return "FARM_ITEM_METAL_ORE";
+        case FARM_ITEM_METAL_FRAGS: return "FARM_ITEM_METAL_FRAGS";
+        case FARM_ITEM_HQM_ORE: return "FARM_ITEM_HQM_ORE";
+        case FARM_ITEM_HQM: return "FARM_ITEM_HQM";
+        case FARM_ITEM_SULFUR_ORE: return "FARM_ITEM_SULFUR_ORE";
+        case FARM_ITEM_SULFUR: return "FARM_ITEM_SULFUR";
     }
 }
 

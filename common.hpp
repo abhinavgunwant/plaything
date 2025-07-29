@@ -13,7 +13,7 @@
 
 #define COLOR_TRANSPARENT { 0, 0, 0, 0 }
 #define COLOR_INV_BG { 0, 0, 0, 50 }
-#define COLOR_INV_BG_ACTIVE { 0, 0, 255, 50 }
+#define COLOR_INV_BG_ACTIVE { 0, 100, 255, 150 }
 
 #define COLOR_EQUAL(x, y) x.r == y.r && x.g == y.g && x.b == y.b && x.a == y.a
 

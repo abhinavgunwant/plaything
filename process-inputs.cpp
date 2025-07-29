@@ -94,5 +94,42 @@ void processInputs() {
             item.onKeyPress();
         }
     }
+
+    if (IsKeyDown(KEY_E)) {
+        EntityCollision ec = em.getRayCastCollision(ECT_OTHER, 10);
+
+        if (ec.collision.hit) {
+            cout << "\nUse hit!";
+            Entity3D e = em.get3DEntity(ec.entityId);
+
+            if (e.item.type != ITEM_NONE && !em.isEntityBlocked(ec.entityId)) {
+                e.item.onUse();
+                em.blockEntityInteraction(ec.entityId);
+
+                // TODO: find a better place for this code!
+                switch (e.item.type) {
+                    case ITEM_FURNACE: {
+                        if (em.isEntityInteractiveMenuShown()) {
+                            em.hideEntityInteractionMenu();
+                        } else {
+                            em.showEntityInteractionMenu(ec.entityId);
+                        }
+                        break;
+                    }
+                        
+                    default: break;
+                }
+            }
+        }
+    }
+
+    // TODO: replace this code with inventory menu
+    // if (IsKeyDown(KEY_TAB)) {
+    //     if (em.isEntityInteractiveMenuShown()) {
+    //         em.hideEntityInteractionMenu();
+    //     } else {
+    //         em.showEntityInteractionMenu(ec.entityId);
+    //     }
+    // }
 }
 

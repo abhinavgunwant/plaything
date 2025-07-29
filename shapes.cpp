@@ -66,7 +66,7 @@ Shape2D Img(int x, int y, int width, int height, Image invImage) {
 }
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color) {
-	return { SHAPE_3D_CUBE, CubeData { position, width, height, length, color } };
+	return { SHAPE_3D_CUBE, CubeData { position, height, width, length, color } };
 }
 
 Shape3D Line(Vector3 startPos, Vector3 endPos, Color color) {

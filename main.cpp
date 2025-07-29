@@ -15,15 +15,13 @@ int main() {
 
     // Main loop
     while (!WindowShouldClose()) {
-        UpdateCamera(em.getCamera(), CAMERA_FIRST_PERSON);
-
         processInputs();
 
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
 
-        em.drawEntities();
+        em.manageEntities();
 
         EndDrawing();
     }
