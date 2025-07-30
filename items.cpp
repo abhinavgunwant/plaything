@@ -103,14 +103,13 @@ void Item::onClick() {
                 Entity3D furnaceEntity = Entity3D(em.lastId() + 1, Cube(ec.collision.point, 1, 5, 2, ORANGE));
                 Item furnaceItem = Item(ITEM_FURNACE);
 
-                furnaceItem.itemData.furnace = {
-                    0, { 0, 0 }, { 0, 0, 0 },
-                    { FARM_ITEM_NONE, FARM_ITEM_NONE },
-                    { FARM_ITEM_NONE, FARM_ITEM_NONE, FARM_ITEM_NONE }
-                };
+                furnaceItem.itemData.furnace = DEMO_FURNACE(
+                    1000, 1000, 100, FARM_ITEM_METAL_FRAGS, 100,
+                    FARM_ITEM_METAL_ORE, true
+                );
 
                 furnaceEntity.item = furnaceItem;
-                em.addEntity(furnaceEntity);
+                uint32_t id = em.addEntity(furnaceEntity);
             }
 
             break;
@@ -153,25 +152,7 @@ void Item::onUse() {
         case ITEM_HAMMER: break;
         case ITEM_ASSAULT_RIFLE: break;
         case ITEM_PISTOL: break;
-        case ITEM_FURNACE: {
-            cout << "\nFurnace { wood: " << itemData.furnace.woodQty
-                << ", ores: { slot1: "
-                << getFarmItemName(itemData.furnace.oreTypes[0])
-                << "(" << itemData.furnace.oreQty[0] << "), slot2: "
-                << getFarmItemName(itemData.furnace.oreTypes[1])
-                << "(" << itemData.furnace.oreQty[0] << ") }"
-                << ", output: { slot1: "
-                << getFarmItemName(itemData.furnace.outputTypes[0])
-                << "(" << itemData.furnace.outputQty[0]
-                << "), slot2: "
-                << getFarmItemName(itemData.furnace.outputTypes[1])
-                << "(" << itemData.furnace.outputQty[1]
-                << "), slot3: "
-                << getFarmItemName(itemData.furnace.outputTypes[2])
-                << "(" << itemData.furnace.outputQty[2]
-                << "), on: " << itemData.furnace.on << " } }";
-            break;
-        }
+        case ITEM_FURNACE: printState(); break;
         default: return;
     }
 }
@@ -197,6 +178,39 @@ void Item::onKeyPress() {
     }
 }
 
+void Item::printState() {
+    switch (type) {
+        case ITEM_BLUEPRINT: break;
+        case ITEM_HAMMER: break;
+        case ITEM_ASSAULT_RIFLE: break;
+        case ITEM_PISTOL: break;
+        case ITEM_FURNACE: {
+            cout << "\nFurnace { wood: { quantity: " << itemData.furnace.woodQty
+                << ", health: " << (int)itemData.furnace.woodHealth
+                << " }, ores: { slot1: { item: "
+                << getFarmItemName(itemData.furnace.oreTypes[0])
+                << ", health: " << (int)itemData.furnace.oreHealth[0]
+                << ", quantity: " << itemData.furnace.oreQty[0]
+                << " }, slot2: { item: "
+                << getFarmItemName(itemData.furnace.oreTypes[1])
+                << ", health: " << (int)itemData.furnace.oreHealth[1]
+                << ", quantity: " << itemData.furnace.oreQty[1]
+                << " } }, output: { slot1: { item: "
+                << getFarmItemName(itemData.furnace.outputTypes[0])
+                << ", quantity: " << itemData.furnace.outputQty[0]
+                << " }, slot2: { item: "
+                << getFarmItemName(itemData.furnace.outputTypes[1])
+                << ", quantity: " << itemData.furnace.outputQty[1]
+                << " }, slot3: { item: "
+                << getFarmItemName(itemData.furnace.outputTypes[2])
+                << ", quantity: " << itemData.furnace.outputQty[2]
+                << " }, on: " << itemData.furnace.on << " } }";
+            break;
+        }
+        default: return;
+    }
+}
+
 string getItemTypeName(ItemType type) {
     switch (type) {
         case ITEM_NONE: return "ITEM_NONE";
@@ -218,6 +232,7 @@ string getFarmItemName(FarmItemTypes type) {
     switch (type) {
         case FARM_ITEM_NONE: return "FARM_ITEM_NONE";
         case FARM_ITEM_WOOD: return "FARM_ITEM_WOOD";
+        case FARM_ITEM_CHARCOAL: return "FARM_ITEM_CHARCOAL";
         case FARM_ITEM_STONES: return "FARM_ITEM_STONES";
         case FARM_ITEM_METAL_ORE: return "FARM_ITEM_METAL_ORE";
         case FARM_ITEM_METAL_FRAGS: return "FARM_ITEM_METAL_FRAGS";

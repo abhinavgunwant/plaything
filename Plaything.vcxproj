@@ -133,6 +133,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="process-inputs.cpp" />
     <ClCompile Include="shapes.cpp" />
+    <ClCompile Include="systems.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.hpp" />

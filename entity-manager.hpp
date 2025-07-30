@@ -7,6 +7,7 @@
 #include "raylib.h"
 
 #include "shapes.hpp"
+#include "systems.hpp"
 
 using namespace std;
 
@@ -71,7 +72,6 @@ class Entity3D {
 
 class EntityManager {
 private:
-	EntityManager* instance = nullptr;
 	uint32_t idCounter;
 	Camera3D camera;
 	vector<Entity3D> entities3d;
@@ -79,9 +79,18 @@ private:
     vector<BlockedEntity> blockedEntities;
     vector<uint32_t> menuEntityIds;
     float menuBlockTimer;
+    FurnaceSystem furnaceSystem;
 
 	void initCamera();
     void init();
+    
+    /**
+     * Takes care of system operations that are needed after an entity is
+     * created.
+     *
+     * As of now only works for Entity3D with `item` field set.
+     */
+    void handleSystemEntityInit(Entity3D entity, uint32_t id);
 
 public:
 	EntityManager();
@@ -121,6 +130,7 @@ public:
 
     /** Per-frame entity management. Called by main function. */
     void manageEntities();
+    void runSystems(float frameTime);
 
     uint32_t lastId();
 };

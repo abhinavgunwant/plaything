@@ -2,4 +2,5 @@
 Plaything/
 x64/
 build.log
+*.blend*
 

@@ -5,6 +5,15 @@
 #include <string>
 #include "raylib.h"
 
+#define DEFAULT_FURNACE { 0, 0, { 0, 0 }, { 0, 0 }, { 0, 0, 0 },\
+    { FARM_ITEM_NONE, FARM_ITEM_NONE },\
+    { FARM_ITEM_NONE, FARM_ITEM_NONE, FARM_ITEM_NONE }, false }
+
+#define DEMO_FURNACE(wood, ore, output, outputType, charcoal, oreType, on) {\
+    wood, 255, { ore, 0 }, { 255, 0 }, { output, charcoal, 0 },\
+    { oreType, FARM_ITEM_NONE },\
+    { outputType, FARM_ITEM_CHARCOAL, FARM_ITEM_NONE }, on }
+
 using namespace std;
 
 enum ItemType {
@@ -27,6 +36,7 @@ enum ItemType {
 enum FarmItemTypes {
     FARM_ITEM_NONE,
     FARM_ITEM_WOOD,
+    FARM_ITEM_CHARCOAL,
     FARM_ITEM_STONES,
     FARM_ITEM_METAL_ORE,
     FARM_ITEM_METAL_FRAGS,
@@ -47,8 +57,14 @@ struct Furnace {
     /** Quantity of wood in the input slot. */
     uint16_t woodQty;
 
+    /** Health of wood between 0-255 */
+    uint8_t woodHealth;
+
     /** Quantity of ores in their respective slots. */
     uint16_t oreQty[2];
+
+    /** Health of ores between 0-255 */
+    uint8_t oreHealth[2];
 
     /** Quantity of output items in their respective slots. */
     uint16_t outputQty[3];
@@ -93,6 +109,7 @@ class Item {
         void onRightClick();
         void onKeyPress();
         void onUse();
+        void printState();
 };
 
 string getFarmItemName(FarmItemTypes type);

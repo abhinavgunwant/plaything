@@ -87,6 +87,13 @@ void EntityManager::initCamera() {
     this->camera.projection = CAMERA_PERSPECTIVE;
 }
 
+void EntityManager::handleSystemEntityInit(Entity3D entity, uint32_t id) {
+    switch (entity.item.type) {
+        case ITEM_FURNACE: furnaceSystem.addFurnaceId(id); return;
+        default: return;
+    }
+}
+
 inline void EntityManager::setCameraPosition(Vector3 position) {
     this->camera.position = position;
 }
@@ -102,6 +109,7 @@ uint32_t EntityManager::addEntity(Entity3D entity) {
         newEntity.shapes = entity.shapes;
         newEntity.item = entity.item;
         entities3d.push_back(newEntity);
+        handleSystemEntityInit(newEntity, id);
         return id;
     }
 
@@ -111,6 +119,7 @@ uint32_t EntityManager::addEntity(Entity3D entity) {
         idCounter = entity.getId() + 1;
     }
 
+    handleSystemEntityInit(entity, entity.getId());
     return entity.getId();
 }
 
@@ -534,14 +543,19 @@ void EntityManager::draw2D(const Shape2D& shape) {
 void EntityManager::manageEntities() {
     float frameTime = GetFrameTime();
 
-    em.drawEntities();
-    em.updateEntityInteraction(frameTime);
+    drawEntities();
+    updateEntityInteraction(frameTime);
+    runSystems(frameTime);
 
     if (!em.isEntityInteractiveMenuShown()) {
         UpdateCamera(em.getCamera(), CAMERA_FIRST_PERSON);
     }
 
-    DrawBoundingBox(bb, RED);
+    // DrawBoundingBox(bb, RED);
+}
+
+void EntityManager::runSystems(float frameTime) {
+    furnaceSystem.run(frameTime);
 }
 
 // EntityManager's Global instance definition

@@ -33,6 +33,9 @@
     <ClCompile Include="items.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="systems.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="entity-manager.hpp">
