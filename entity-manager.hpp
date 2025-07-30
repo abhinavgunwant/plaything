@@ -2,6 +2,7 @@
 #define PLAYTHING_ENTITY_MANAGER
 
 #include <vector>
+#include <unordered_map>
 
 #include "items.hpp"
 #include "raylib.h"
@@ -34,10 +35,21 @@ class Entity2D {
     public:
         vector<Shape2D> shapes;
 
+        /**
+         * For text-specific cases, the actual string is stored here and the
+         * rest of the items are picked from the shape data.
+         *
+         * TODO: find a better alternative to this!
+         */
+        string text;
+
         Entity2D();
         Entity2D(uint32_t id);
         Entity2D(Shape2D shape);
         Entity2D(uint32_t id, Shape2D shape);
+        Entity2D(string text, int x = 10, int y = 10, int fontSize = 20, Color color = GRAY);
+        Entity2D(uint32_t id, string text, int x = 10, int y = 10, int fontSize = 20, Color color = GRAY);
+        ~Entity2D();
 
 		void addShape(Shape2D &shape);
 		void addShape(Shape2D shape);
@@ -78,6 +90,7 @@ private:
 	vector<Entity2D> entities2d;
     vector<BlockedEntity> blockedEntities;
     vector<uint32_t> menuEntityIds;
+    unordered_map<string, uint32_t> itemMenuMap;
     float menuBlockTimer;
     FurnaceSystem furnaceSystem;
 
@@ -102,6 +115,8 @@ public:
 	uint32_t addEntity(Shape3D shape);
 	uint32_t addEntity(Shape3D &shape);
 	uint32_t addEntity(Entity2D entity);
+	uint32_t addEntity(string text, int x = 10, int y = 10, int fontSize = 20, Color color = GRAY);
+	uint32_t addEntity(string text, int x = 10, int y = 10, Color color = GRAY);
 	uint32_t addEntity(Shape2D shape);
 	uint32_t addEntity(Shape2D &shape);
     void deleteEntity(uint32_t id);
@@ -121,6 +136,8 @@ public:
     void showEntityInteractionMenu(uint32_t);
     void hideEntityInteractionMenu();
     bool isEntityInteractiveMenuShown();
+    uint32_t getItemMenuEntityId(string key);
+    void updateItemMenuText(string key, string newText);
 
     void update2DEntity(uint32_t id, Entity2D newEntity);
     void update3DEntity(uint32_t id, Entity3D newEntity);

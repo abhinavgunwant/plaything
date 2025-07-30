@@ -1,7 +1,11 @@
 #ifndef PLAYTHING_SHAPES
 #define PLAYTHING_SHAPES
 
+#include <string>
+
 #include "raylib.h"
+
+using namespace std;
 
 enum Shape3DType {
 	SHAPE_3D_CUBE,
@@ -41,9 +45,10 @@ struct Shape3D {
 };
 
 struct TextData {
-	char* text;
+	char * text;
 	int fontSize;
 	Color color;
+    bool heapAllocated;
 };
 
 /**
@@ -81,7 +86,8 @@ struct Shape2D {
 Shape2D Text(char* text, int x, int y);
 Shape2D Text(char* text, int x, int y, int fontSize);
 Shape2D Text(char* text, int x, int y, int fontSize, Color color);
-Shape2D Text(char * text, int x, int y, Color color);
+Shape2D Text(string text, int x, int y, int fontSize, Color color);
+Shape2D Text(char* text, int x, int y, Color color);
 Shape2D Line2D(int startX, int startY, int endX, int endY, Color color);
 Shape2D Rect(int startX, int startY, int endX, int endY, Color color);
 Shape2D Img(int x, int y, int width, int height, Image invImage);

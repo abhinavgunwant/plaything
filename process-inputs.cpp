@@ -99,7 +99,7 @@ void processInputs() {
         EntityCollision ec = em.getRayCastCollision(ECT_OTHER, 10);
 
         if (ec.collision.hit) {
-            cout << "\nUse hit!";
+            cout << "\nUse hit.";
             Entity3D e = em.get3DEntity(ec.entityId);
 
             if (e.item.type != ITEM_NONE && !em.isEntityBlocked(ec.entityId)) {
@@ -119,6 +119,8 @@ void processInputs() {
                         
                     default: break;
                 }
+            } else {
+                cout << " Entity is temporarily blocked from using.";
             }
         }
     }

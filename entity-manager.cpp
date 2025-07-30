@@ -1,6 +1,9 @@
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <limits>
+#include <string>
+#include <cstring>
 
 #include "items.hpp"
 #include "raylib.h"
@@ -23,6 +26,42 @@ Entity2D::Entity2D(uint32_t id) { this->id = id; }
 Entity2D::Entity2D(uint32_t id, Shape2D shape) {
     this->id = id;
     this->shapes.push_back(shape);
+}
+
+Entity2D::Entity2D(string text, int x, int y, int fontSize, Color color) {
+    this->text = text;
+    Shape2D s;
+    s.x = x;
+    s.y = y;
+    s.type = SHAPE_2D_TEXT;
+    s.shapeData.textData.fontSize = fontSize;
+    s.shapeData.textData.color = color;
+
+    shapes.push_back(s);
+}
+
+Entity2D::Entity2D(uint32_t id, string text, int x, int y, int fontSize, Color color) {
+    this->id = id;
+    this->text = text;
+    Shape2D s;
+    s.x = x;
+    s.y = y;
+    s.type = SHAPE_2D_TEXT;
+    s.shapeData.textData.fontSize = fontSize;
+    s.shapeData.textData.color = color;
+
+    shapes.push_back(s);
+}
+
+Entity2D::~Entity2D() {
+    for (Shape2D shape : shapes) {
+        if (shape.shapeData.textData.heapAllocated == true) {
+            cout << "\nfound a heap allocated string: " << shape.shapeData.textData.text;
+            delete shape.shapeData.textData.text;
+            cout << "\ndeleted the heap allocated string!";
+            shape.shapeData.textData.heapAllocated = false;
+        }
+    }
 }
 
 Entity2D::Entity2D(Shape2D shape) {
@@ -150,6 +189,22 @@ uint32_t EntityManager::addEntity(Entity2D entity) {
 
     entities2d.push_back(entity);
     return entity.getId();
+}
+
+uint32_t EntityManager::addEntity(string text, int x, int y, int fontSize, Color color) {
+    uint32_t id = idCounter++;
+
+    entities2d.push_back(Entity2D(id, text, x, y, fontSize, color));
+
+    return id;
+}
+
+uint32_t EntityManager::addEntity(string text, int x, int y, Color color) {
+    uint32_t id = idCounter++;
+
+    entities2d.push_back(Entity2D(id, text, x, y, 20, color));
+
+    return id;
 }
 
 uint32_t EntityManager::addEntity(Shape2D shape) {
@@ -341,29 +396,98 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
     EnableCursor();
 
     Entity3D entity = get3DEntity(id);
-    Color base = { 255, 255, 255, 160 };
+    Color base = { 255, 255, 255, 80 };
     int xOffset = 1120;
+
+    globalState.itemIdInUse = id;
 
     switch (entity.item.type) {
         case ITEM_FURNACE: {
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset, 200, 400, 500, { 0, 0, 0, 160 })));
-            menuEntityIds.push_back(em.addEntity(Text((char *)"Furnace", xOffset + 160, 210, WHITE)));
+            #define FURNACE     entity.item.itemData.furnace
+            #define ADD(x)      menuEntityIds.push_back(x)
+            #define E           em.addEntity
+            #define KEY(a, b)   a + to_string(b+1) + "Qty"
+            #define QTY(a)      "x" + to_string((int) FURNACE.a)
 
-            menuEntityIds.push_back(em.addEntity(Text((char *)"Wood:", xOffset + 175, 240, WHITE)));
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 155, 260, 90, 90, base)));
+            ADD(E(Rect(xOffset, 200, 400, 500, { 0, 0, 0, 160 })));
+            ADD(E("Furnace", xOffset + 160, 210, WHITE));
 
-            menuEntityIds.push_back(em.addEntity(Text((char *)"Input:", xOffset + 170, 360, WHITE)));
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 105, 380, 90, 90, base)));
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 205, 380, 90, 90, base)));
+            ADD(E("Wood:", xOffset + 175, 240, WHITE));
+            ADD(E(Rect(xOffset + 155, 260, 90, 90, base)));
 
-            menuEntityIds.push_back(em.addEntity(Text((char *)"Output:", xOffset + 165, 480, WHITE)));
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 55, 500, 90, 90, base)));
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 155, 500, 90, 90, base)));
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 255, 500, 90, 90, base)));
+            ADD(E("Input:", xOffset + 170, 360, WHITE));
+            ADD(E(Rect(xOffset + 105, 380, 90, 90, base)));
+            ADD(E(Rect(xOffset + 205, 380, 90, 90, base)));
 
-            menuEntityIds.push_back(em.addEntity(Rect(xOffset + 155, 600, 90, 90, { 255, 0, 0, 160 })));
-            menuEntityIds.push_back(em.addEntity(Text((char *)"Turn On", xOffset + 155, 630, WHITE)));
+            ADD(E("Output:", xOffset + 165, 480, WHITE));
+            ADD(E(Rect(xOffset + 55, 500, 90, 90, base)));
+            ADD(E(Rect(xOffset + 155, 500, 90, 90, base)));
+            ADD(E(Rect(xOffset + 255, 500, 90, 90, base)));
 
+            if (FURNACE.woodQty > 0) {
+                uint32_t woodId = E(QTY(woodQty), xOffset + 155, 330, 20, WHITE);
+                ADD(woodId);
+                itemMenuMap["woodQty"] = woodId;
+
+                Image wood = LoadImage("./assets/wood_invIcon.png");
+                ADD(E(Img(xOffset + 155, 260, 90, 90, wood)));
+            }
+
+            for (
+                int i=0, offset1 = xOffset + 105, offset2 = xOffset + 55;
+                i<3;
+                ++i, offset1 += 100, offset2 += 100
+            ) {
+                if (FURNACE.outputQty[i] > 0) {
+                    switch(FURNACE.outputTypes[i]) {
+                        case FARM_ITEM_METAL_FRAGS: {
+                            Image metalFrags = LoadImage("./assets/metalFrags_invIcon.png");
+                            ADD(E(Img(offset2, 500, 90, 90, metalFrags)));
+                            break;
+                        }
+                        case FARM_ITEM_CHARCOAL: {
+                            Image charcoal = LoadImage("./assets/charcoal_invIcon.png");
+                            ADD(E(Img(offset2, 500, 90, 90, charcoal)));
+                            break;
+                        }
+                    }
+
+                    uint32_t id1 = E(QTY(outputQty[i]), offset2, 570, WHITE);
+                    
+                    itemMenuMap[KEY("out", i)] = id1;
+                    ADD(id1);
+                }
+
+                if (i > 1) { continue; }
+
+                if (FURNACE.oreQty[i] > 0) {
+                    switch(FURNACE.oreTypes[i]) {
+                        case FARM_ITEM_METAL_ORE:
+                            Image metalOre = LoadImage("./assets/metalOre_invIcon.png");
+                            ADD(E(Img(offset1, 380, 90, 90, metalOre)));
+                            break;
+                    }
+
+                    uint32_t id2 = E(QTY(oreQty[i]), offset1, 450, WHITE);
+                    itemMenuMap[KEY("ore", i)] = id2;
+                    ADD(id2);
+                }
+            }
+
+
+            if (FURNACE.on) {
+                ADD(E("Turn Off", xOffset + 155, 630, WHITE));
+                ADD(E(Rect(xOffset + 145, 600, 110, 90, { 255, 0, 0, 160 })));
+            } else {
+                ADD(E("Turn On", xOffset + 155, 630, WHITE));
+                ADD(E(Rect(xOffset + 155, 600, 90, 90, { 255, 0, 0, 160 })));
+            }
+
+            #undef KEY
+            #undef QTY
+            #undef E
+            #undef FURNACE
+            #undef Add
             break;
         }
         default: break;
@@ -381,10 +505,52 @@ void EntityManager::hideEntityInteractionMenu() {
         deleteEntity(id);
     }
 
+    globalState.itemIdInUse = 0;
+    itemMenuMap.clear();
     menuEntityIds.clear();
 }
 
 bool EntityManager::isEntityInteractiveMenuShown() { return !menuEntityIds.empty(); }
+
+uint32_t EntityManager::getItemMenuEntityId(string key) {
+    if (itemMenuMap.find(key) != itemMenuMap.end()) {
+        return itemMenuMap[key];
+    }
+
+    return 0;
+}
+
+void EntityManager::updateItemMenuText(string key, string newText) {
+    uint32_t id = getItemMenuEntityId(key);
+
+    // cout << "\n\nItem menu map:";
+
+    // for (auto &m: itemMenuMap) {
+    //     cout << "\n    " << m.first << ": " << m.second;
+    // }
+
+    if (id == 0) {
+        // cout << "\nDid not find item with key: " << key;
+        return;
+    }
+
+    cout<<"\nfound in map!";
+
+    Entity2D e = get2DEntity(id);
+
+    #define TEXT_DATA   s.shapeData.textData
+
+    if (!e.shapes.empty() && (*(e.shapes.begin())).type == SHAPE_2D_TEXT) {
+        Shape2D s = (*(e.shapes.begin()));
+
+        em.update2DEntity(
+            id,
+            Entity2D(id, newText, s.x, s.y, TEXT_DATA.fontSize, TEXT_DATA.color)
+        );
+    }
+
+    #undef TEXT_DATA
+}
 
 void EntityManager::updateEntityInteraction(float time) {
     if (menuBlockTimer > 0) {
@@ -424,8 +590,17 @@ void EntityManager::update2DEntity(uint32_t id, Entity2D newEntity) {
         itr < entities2d.end();
         ++itr) {
         if ((*itr).getId() == id) {
-            cout << "Entity with id: " << id << " updated!";
-            (*itr) = newEntity;
+            // cout << "Entity with id: " << id << " updated!";
+
+            if (newEntity.getId() != id) {
+                Entity2D anotherEntity(id);
+                anotherEntity.text = newEntity.text;
+                anotherEntity.shapes = newEntity.shapes;
+
+                (*itr) = anotherEntity;
+            } else {
+                (*itr) = newEntity;
+            }
             return;
         }
     }
@@ -436,6 +611,8 @@ void EntityManager::update2DEntity(uint32_t id, Entity2D newEntity) {
         } catch (exception &e) {
             cout << "\n!!!! exception while updating entity: " << e.what();
         }
+    } else {
+        cout << "\nError: The 2D entity was not found!";
     }
 }
 
@@ -448,7 +625,7 @@ void EntityManager::update3DEntity(uint32_t id, Entity3D newEntity) {
         itr < entities3d.end();
         ++itr) {
         if ((*itr).getId() == id) {
-            cout << "Entity with id: " << id << " updated!";
+            // cout << "Entity with id: " << id << " updated!";
             (*itr) = newEntity;
             return;
         }
@@ -475,11 +652,19 @@ void EntityManager::drawEntities() {
     EndMode3D();
 
     for (Entity2D e : this->entities2d) {
-        for (const Shape2D& shape : e.shapes) {
-            // if (e.getId() == 7) {
-            //     shape2DInfo(shape);
-            // }
+        if (!e.text.empty()) {
+            Shape2D firstShape = (*(e.shapes.begin()));
 
+            if (firstShape.type == SHAPE_2D_TEXT) {
+                TextData t = firstShape.shapeData.textData;
+                char c[2000];
+                strcpy_s(c, (char *)e.text.c_str());
+                DrawText(c, firstShape.x, firstShape.y, t.fontSize, t.color);
+                continue;
+            }
+        }
+
+        for (const Shape2D& shape : e.shapes) {
             draw2D(shape);
         }
     }

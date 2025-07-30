@@ -1,5 +1,5 @@
 #include <iostream>
-#include <string>
+#include <cstring>
 
 #include "raylib.h"
 
@@ -17,6 +17,19 @@ Shape2D Text(char* text, int x, int y, int fontSize) {
 
 Shape2D Text(char* text, int x, int y, int fontSize, Color color) {
 	return { SHAPE_2D_TEXT, (float)x, (float)y, TextData { text, fontSize, color } };
+}
+
+Shape2D Text(string text, int x, int y, int fontSize, Color color) {
+    char _charStr[20];
+    strcpy_s(_charStr, (char *) text.c_str());
+
+    char * cstr = new char[text.length() + 1];
+
+    for (int i=0; i<text.length()+1; ++i) {
+        cstr[i] = _charStr[i];
+    }
+
+	return { SHAPE_2D_TEXT, (float)x, (float)y, TextData { cstr, fontSize, color, true } };
 }
 
 Shape2D Text(char* text, int x, int y, Color color) {

@@ -2,28 +2,46 @@
 
 #include "systems.hpp"
 #include "entity-manager.hpp"
+#include "game-state.hpp"
 
 using namespace std;
 
+#define KEY(a, b)   a + to_string(b+1) + "Qty"
+#define XSTR(a)     "x" + to_string(a)
+
 void furnaceCook(
     uint8_t *health, uint8_t shd, uint8_t mhd, uint8_t hhd, uint16_t *qty,
-    FarmItemTypes * oreTypes, FarmItemTypes * outTypes, uint16_t *out
+    FarmItemTypes * oreTypes, FarmItemTypes * outTypes, uint16_t *out,
+    bool inUse
 ) {
+
     // Macro to update outputs
     #define U_OUT(decr, type)    do {\
-        health -= decr;\
+        health[j] -= decr;\
         if (health[j] > prevHealth) {\
             if (qty[j] > 0) {\
                 --qty[j];\
-                cout << "!";\
                 for (int i=0; i<3; ++i) {\
                     if (outTypes[i] == type && out[i] < 1000) {\
                         ++out[i];\
+                        if (inUse) {\
+                            cout<<"\n!! out"<<i+1<<"Qty: "<<out[i];\
+                            em.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
+                        }\
+                        break;\
                     } else if (outTypes[i] == FARM_ITEM_NONE) {\
-                        outTypes[i] = FARM_ITEM_SULFUR_ORE; out[i] = 1;\
+                        outTypes[i] = type; out[i] = 1;\
+                        if (inUse) {\
+                            cout<<"\n!! out"<<i+1<<"Qty: "<<out[i];\
+                            em.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
+                        }\
+                        break;\
                     }\
                 }\
-            } else { health = 0; }\
+                if (inUse) {\
+                    em.updateItemMenuText(KEY("ore", j), XSTR(qty[j]));\
+                }\
+            } else { health[j] = 0; }\
         }\
     } while(false)
 
@@ -31,13 +49,14 @@ void furnaceCook(
         uint8_t prevHealth = health[j];
 
         switch (oreTypes[j]) {
-            case FARM_ITEM_SULFUR_ORE: U_OUT(shd, FARM_ITEM_SULFUR_ORE); break;
-            case FARM_ITEM_METAL_ORE: U_OUT(mhd, FARM_ITEM_METAL_ORE); break;
-            case FARM_ITEM_HQM_ORE: U_OUT(hhd, FARM_ITEM_HQM_ORE); break;
+            case FARM_ITEM_SULFUR_ORE: U_OUT(shd, FARM_ITEM_SULFUR); break;
+            // case FARM_ITEM_METAL_ORE: U_OUT(mhd, FARM_ITEM_METAL_ORE); break;
+            case FARM_ITEM_METAL_ORE: U_OUT(mhd, FARM_ITEM_METAL_FRAGS); break;
+            case FARM_ITEM_HQM_ORE: U_OUT(hhd, FARM_ITEM_HQM); break;
             default: break;
         }
 
-        if (qty[j] == 0) {
+        if (qty[j] == 0 && health != 0 && oreTypes[j] != FARM_ITEM_NONE) {
             health = 0;
             oreTypes[j] = FARM_ITEM_NONE;
         }
@@ -49,15 +68,16 @@ void furnaceCook(
 void FurnaceSystem::run(float frameTime) {
     if (ids.empty()) { return; }
 
+
     const float frameTime_ = frameTime * 255;
     const uint8_t sulfurHealthDelta = frameTime_;
     const uint8_t woodHealthDelta = 0.8 * frameTime_;
     const uint8_t metalHealthDelta = 0.33 * frameTime_;
     const uint8_t hqmHealthDelta = 0.2 * frameTime_;
 
-    cout << "\nRunning furnace system. frametime: " << frameTime << ", sulfurHealthDelta: "
-        << (int)sulfurHealthDelta << ", woodHealthDelta: " << (int)woodHealthDelta << ", metalHealthDelta: "
-        << (int)metalHealthDelta << ", hqmHealthDelta: " << (int)hqmHealthDelta;
+    // cout << "\nRunning furnace system. frametime: " << frameTime << ", sulfurHealthDelta: "
+    //     << (int)sulfurHealthDelta << ", woodHealthDelta: " << (int)woodHealthDelta << ", metalHealthDelta: "
+    //     << (int)metalHealthDelta << ", hqmHealthDelta: " << (int)hqmHealthDelta;
 
     uint16_t qty[2]; // ore quantities
     uint8_t health[2];
@@ -73,6 +93,8 @@ void FurnaceSystem::run(float frameTime) {
             removeFurnaceId(id);
             continue;
         }
+
+        bool inUse = globalState.itemIdInUse == e.getId();
 
         #define WOOD            e.item.itemData.furnace.woodQty
         #define WOOD_HEALTH     e.item.itemData.furnace.woodHealth
@@ -98,16 +120,27 @@ void FurnaceSystem::run(float frameTime) {
 
             if (wHealth > prevHealth) {
                 if (wQty > 0) {
-                    cout << "!";
                     --wQty;
 
                     for (int i=0; i<3; ++i) {
                         if (outTypes[i] == FARM_ITEM_CHARCOAL && out[i] < 1000) {
                             ++out[i];
+                            if (inUse) {
+                                em.updateItemMenuText(KEY("out", i), XSTR(out[i]));
+                            }
+                            break;
                         } else if (outTypes[i] == FARM_ITEM_NONE) {
                             out[i] = 1;
                             outTypes[i] = FARM_ITEM_CHARCOAL;
+                            if (inUse) {
+                                em.updateItemMenuText(KEY("out", i), XSTR(out[i]));
+                            }
+                            break;
                         }
+                    }
+
+                    if (globalState.itemIdInUse == id) {
+                        em.updateItemMenuText("woodQty", "x"+to_string(wQty));
                     }
                 }
 
@@ -119,12 +152,12 @@ void FurnaceSystem::run(float frameTime) {
             WOOD = wQty;
             WOOD_HEALTH = wHealth;
 
-            cout << ". Wood health before: " << (int) prevHealth << ", and after: " << (int)wHealth;
+            // cout << ". Wood health before: " << (int) prevHealth << ", and after: " << (int)wHealth;
         }
 
         furnaceCook(
             health, sulfurHealthDelta, metalHealthDelta, hqmHealthDelta, qty,
-            oreTypes, outTypes, out
+            oreTypes, outTypes, out, inUse
         );
 
         for (int i=0; i<3; ++i) {
@@ -138,7 +171,7 @@ void FurnaceSystem::run(float frameTime) {
             ITEM_FURNACE.outputQty[i] = out[i];
         }
 
-        e.item.printState();
+        // e.item.printState();
 
         em.update3DEntity(id, e);
 
