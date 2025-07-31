@@ -3,8 +3,6 @@
 #include <vector>
 #include <limits>
 #include <string>
-#include <cstring>
-#include <cmath>
 
 #include "items.hpp"
 #include "raylib.h"
@@ -15,9 +13,19 @@
 #include "shapes.hpp"
 #include "game-state.hpp"
 
-using namespace std;
+#define INV_OUTER_BOX_COLOR { 0, 0, 0, 160 }
+#define INV_SLOT_DIMENSION SCREEN_HEIGHT/10
+#define INV_ROWS 4
+#define INV_SLOT_NUM 6
+#define INV_SLOT_GAP 10
+#define INV_SLOT_START_X (SCREEN_WIDTH - 6 * INV_SLOT_DIMENSION - INV_SLOT_GAP * (INV_SLOT_NUM - 1)) / 2
 
-BoundingBox bb = { VEC_ZERO, VEC_ZERO };
+#define UTIL_BOX_Y SCREEN_HEIGHT - invBoxDim - INV_SLOT_GAP
+
+#define ADD(x)      menuEntityIds.push_back(x)
+#define E           em.addEntity
+
+using namespace std;
 
 BoundingBox getBBForCube(Vector3 position, CubeData cubeData) {
     float w_2 = cubeData.width/2;
@@ -130,6 +138,9 @@ EntityManager::EntityManager() { init(); }
 void EntityManager::init() {
     idCounter = 1;
 
+    entities2d.reserve(128);
+    entities3d.reserve(256);
+
 	cout << "\nEntity manager created!Initializing camera...";
 	initCamera();
     cout << "\n--> Camera initialized!";
@@ -240,8 +251,8 @@ uint32_t EntityManager::addEntity(Shape2D &shape) {
     return id;
 }
 
-void EntityManager::deleteEntity(uint32_t id) {
-    if (entities2d.empty() && entities3d.empty()) { return; }
+bool EntityManager::deleteEntity(uint32_t id) {
+    if (entities2d.empty() && entities3d.empty()) { return false; }
 
     try {
         for (
@@ -251,11 +262,12 @@ void EntityManager::deleteEntity(uint32_t id) {
         ) {
             if ((*itr).getId() == id) {
                 entities3d.erase(itr.base() - 1);
-                cout << "\nDeleting entity " << id << "." << idCounter;
+
                 if (idCounter == id + 1) {
                     idCounter = id;
                 }
-                return;
+
+                return true;
             }
         }
     } catch (exception &e) {
@@ -270,16 +282,38 @@ void EntityManager::deleteEntity(uint32_t id) {
         ) {
             if ((*itr).getId() == id) {
                 entities2d.erase(itr.base() - 1);
-                cout << "\nDeleting entry " << id << ".";
+
                 if (idCounter == id + 1) {
                     idCounter = id;
                 }
-                return;
+
+                return true;
             }
         }
     } catch (exception &e) {
         cout << "!!!! Exception: " << e.what();
     }
+
+    return false;
+}
+
+void EntityManager::deleteEntities(vector<uint32_t> ids) {
+    vector<uint32_t> deletedEntities;
+    deletedEntities.reserve(64);
+
+    cout << "\nDeleting entities. ID counter at: " << idCounter;
+
+    for (vector<uint32_t>::reverse_iterator i = ids.rbegin(); i != ids.rend(); ++i) {
+        if (deleteEntity(*i)) {
+            deletedEntities.push_back(*i);
+        }
+    }
+
+    cout << "\nDeleted entities: ";
+
+    for (uint32_t id: deletedEntities) { cout << id << ", "; }
+
+    cout << ". ID counter at: " << idCounter;
 }
 
 EntityCollision EntityManager::getRayCastCollision(
@@ -302,17 +336,7 @@ EntityCollision EntityManager::getRayCastCollision(
             BoundingBox box;
 
             if (s.type == SHAPE_3D_CUBE) {
-                Vector3 p = s.shapeData.cubeData.position;
-                const float width_2 = s.shapeData.cubeData.width/2;
-                const float height_2 = s.shapeData.cubeData.height/2;
-                const float length_2 = s.shapeData.cubeData.length/2;
-
-                // box = {
-                //     { p.x - width_2, p.y - height_2, p.z - length_2 },
-                //     { p.x + width_2, p.y + height_2, p.z + length_2 }
-                // };
-                box = getBBForCube(p, s.shapeData.cubeData);
-                bb = box;
+                box = getBBForCube(s.shapeData.cubeData.position, s.shapeData.cubeData);
             } else {
                 continue;
             }
@@ -412,7 +436,7 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
     if (menuBlockTimer > 0) { return; }
     cout << "\nshowing menu";
 
-    menuBlockTimer = 0.5;
+    menuBlockTimer = 0.25;
     EnableCursor();
 
     Entity3D entity = get3DEntity(id);
@@ -424,25 +448,24 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
     switch (entity.item.type) {
         case ITEM_FURNACE: {
             #define FURNACE     entity.item.itemData.furnace
-            #define ADD(x)      menuEntityIds.push_back(x)
-            #define E           em.addEntity
             #define KEY(a, b)   a + to_string(b+1) + "Qty"
             #define QTY(a)      "x" + to_string((int) FURNACE.a)
 
-            ADD(E(Rect(xOffset, 200, 400, 500, { 0, 0, 0, 160 })));
+            const uint16_t d = INV_SLOT_DIMENSION;
+            ADD(E(Rect(xOffset, 200, 400, 500, INV_OUTER_BOX_COLOR)));
             ADD(E("Furnace", xOffset + 160, 210, WHITE));
 
             ADD(E("Wood:", xOffset + 175, 240, WHITE));
-            ADD(E(Rect(xOffset + 155, 260, 90, 90, base)));
+            ADD(E(Rect(xOffset + 155, 260, d, d, base)));
 
             ADD(E("Input:", xOffset + 170, 360, WHITE));
-            ADD(E(Rect(xOffset + 105, 380, 90, 90, base)));
-            ADD(E(Rect(xOffset + 205, 380, 90, 90, base)));
+            ADD(E(Rect(xOffset + 105, 380, d, d, base)));
+            ADD(E(Rect(xOffset + 205, 380, d, d, base)));
 
             ADD(E("Output:", xOffset + 165, 480, WHITE));
-            ADD(E(Rect(xOffset + 55, 500, 90, 90, base)));
-            ADD(E(Rect(xOffset + 155, 500, 90, 90, base)));
-            ADD(E(Rect(xOffset + 255, 500, 90, 90, base)));
+            ADD(E(Rect(xOffset + 55, 500, d, d, base)));
+            ADD(E(Rect(xOffset + 155, 500, d, d, base)));
+            ADD(E(Rect(xOffset + 255, 500, d, d, base)));
 
             if (FURNACE.woodQty > 0) {
                 uint32_t woodId = E(QTY(woodQty), xOffset + 155, 330, 20, WHITE);
@@ -450,7 +473,7 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
                 itemMenuMap["woodQty"] = woodId;
 
                 Image wood = LoadImage("./assets/wood_invIcon.png");
-                ADD(E(Img(xOffset + 155, 260, 90, 90, wood)));
+                ADD(E(Img(xOffset + 155, 260, d, d, wood)));
             }
 
             for (
@@ -462,14 +485,15 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
                     switch(FURNACE.outputTypes[i]) {
                         case FARM_ITEM_METAL_FRAGS: {
                             Image metalFrags = LoadImage("./assets/metalFrags_invIcon.png");
-                            ADD(E(Img(offset2, 500, 90, 90, metalFrags)));
+                            ADD(E(Img(offset2, 500, d, d, metalFrags)));
                             break;
                         }
                         case FARM_ITEM_CHARCOAL: {
                             Image charcoal = LoadImage("./assets/charcoal_invIcon.png");
-                            ADD(E(Img(offset2, 500, 90, 90, charcoal)));
+                            ADD(E(Img(offset2, 500, d, d, charcoal)));
                             break;
                         }
+                        default: continue;
                     }
 
                     uint32_t id1 = E(QTY(outputQty[i]), offset2, 570, WHITE);
@@ -482,10 +506,12 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
 
                 if (FURNACE.oreQty[i] > 0) {
                     switch(FURNACE.oreTypes[i]) {
-                        case FARM_ITEM_METAL_ORE:
+                        case FARM_ITEM_METAL_ORE: {
                             Image metalOre = LoadImage("./assets/metalOre_invIcon.png");
-                            ADD(E(Img(offset1, 380, 90, 90, metalOre)));
+                            ADD(E(Img(offset1, 380, d, d, metalOre)));
                             break;
+                        }
+                        default: continue;
                     }
 
                     uint32_t id2 = E(QTY(oreQty[i]), offset1, 450, WHITE);
@@ -497,17 +523,15 @@ void EntityManager::showEntityInteractionMenu(uint32_t id) {
 
             if (FURNACE.on) {
                 ADD(E("Turn Off", xOffset + 155, 630, WHITE));
-                ADD(E(Rect(xOffset + 145, 600, 110, 90, { 255, 0, 0, 160 })));
+                ADD(E(Rect(xOffset + 145, 600, 110, d, { 255, 0, 0, 160 })));
             } else {
                 ADD(E("Turn On", xOffset + 155, 630, WHITE));
-                ADD(E(Rect(xOffset + 155, 600, 90, 90, { 255, 0, 0, 160 })));
+                ADD(E(Rect(xOffset + 155, 600, d, d, { 255, 0, 0, 160 })));
             }
 
             #undef KEY
             #undef QTY
-            #undef E
             #undef FURNACE
-            #undef Add
             break;
         }
         default: break;
@@ -519,15 +543,11 @@ void EntityManager::hideEntityInteractionMenu() {
     cout << "\nhiding menu";
 
     DisableCursor();
-    menuBlockTimer = 0.5;
+    menuBlockTimer = 0.25;
 
-    for (uint8_t id: menuEntityIds) {
-        deleteEntity(id);
-    }
-
+    deleteMenuEntities();
     globalState.itemIdInUse = 0;
     itemMenuMap.clear();
-    menuEntityIds.clear();
 }
 
 bool EntityManager::isEntityInteractiveMenuShown() { return !menuEntityIds.empty(); }
@@ -543,18 +563,7 @@ uint32_t EntityManager::getItemMenuEntityId(string key) {
 void EntityManager::updateItemMenuText(string key, string newText) {
     uint32_t id = getItemMenuEntityId(key);
 
-    // cout << "\n\nItem menu map:";
-
-    // for (auto &m: itemMenuMap) {
-    //     cout << "\n    " << m.first << ": " << m.second;
-    // }
-
-    if (id == 0) {
-        // cout << "\nDid not find item with key: " << key;
-        return;
-    }
-
-    cout<<"\nfound in map!";
+    if (id == 0) { return; }
 
     Entity2D e = get2DEntity(id);
 
@@ -572,12 +581,65 @@ void EntityManager::updateItemMenuText(string key, string newText) {
     #undef TEXT_DATA
 }
 
+void EntityManager::showInventoryMenu() {
+    menuBlockTimer = 0.25;
+    inventoryMenuBlocked = true;
+    EnableCursor();
+
+    // cout << "showing menu";
+
+    const uint16_t dim = INV_SLOT_DIMENSION;
+    const uint16_t dimGap = dim + INV_SLOT_GAP;
+    const uint16_t xStart = INV_SLOT_START_X;
+    const uint16_t xEnd = INV_SLOT_START_X + dimGap * 6 - INV_SLOT_GAP;
+    const uint16_t yEnd = SCREEN_HEIGHT - dimGap * 2;
+    const uint16_t yStart = yEnd - (INV_SLOT_GAP + dim)*4;
+
+    const uint16_t outerBoxX = dimGap * 6 + INV_SLOT_GAP;
+    const uint16_t outerBoxY = dimGap * 5 + INV_SLOT_GAP;
+
+    ADD(E(Rect(xStart - INV_SLOT_GAP, yStart - INV_SLOT_GAP, outerBoxX, outerBoxY, INV_OUTER_BOX_COLOR)));
+
+    for (uint16_t y = yStart; y <= yEnd; y += dimGap) {
+        for (uint16_t x = xStart; x <= xEnd; x += dimGap) {
+            ADD(E(Rect(x, y, dim, dim, { 0, 0, 0, 160 })));
+        }
+    }
+}
+
+void EntityManager::deleteMenuEntities() {
+    deleteEntities(menuEntityIds);
+
+    menuEntityIds.clear();
+}
+
+void EntityManager::hideInventoryMenu() {
+    if (menuBlockTimer > 0) { return; }
+
+    menuBlockTimer = 0.25;
+    inventoryMenuBlocked = true;
+
+    cout << "\nhiding menu";
+
+    DisableCursor();
+
+    deleteMenuEntities();
+    globalState.itemIdInUse = 0;
+    itemMenuMap.clear();
+}
+
+bool EntityManager::isInventoryMenuShown() { return isEntityInteractiveMenuShown(); }
+bool EntityManager::isInventoryMenuBlocked() { return inventoryMenuBlocked; }
+
 void EntityManager::updateEntityInteraction(float time) {
     if (menuBlockTimer > 0) {
         menuBlockTimer -= time;
+    } else if (menuBlockTimer <= 0) {
+        menuBlockTimer = 0;
+        inventoryMenuBlocked = false;
     }
 
-    if (blockedEntities.empty()) { return; }
+    if (blockedEntities.empty() && !inventoryMenuBlocked) { return; }
 
     bool runAgain;
 
@@ -755,8 +817,6 @@ void EntityManager::manageEntities() {
     if (!em.isEntityInteractiveMenuShown()) {
         UpdateCamera(em.getCamera(), CAMERA_FIRST_PERSON);
     }
-
-    // DrawBoundingBox(bb, RED);
 }
 
 void EntityManager::runSystems(float frameTime) {
@@ -786,21 +846,19 @@ void setupEntities() {
 
     // GUI
     // Draw inventory boxes for utility belt
-    const int invBoxDim = SCREEN_HEIGHT / 10;
-    const int totalInvBoxes = 6;
-    const int gap = 10;
-    const int y = SCREEN_HEIGHT - invBoxDim - gap;
-    int startX = (SCREEN_WIDTH - 6 * invBoxDim - gap * (totalInvBoxes - 1)) / 2;
+    const uint16_t invBoxDim = INV_SLOT_DIMENSION;
+    const uint16_t y = UTIL_BOX_Y;
+    uint16_t startX = INV_SLOT_START_X;
 
     bool first = true;
 
     int startXArr[6];
 
-    for (int i=0; i<totalInvBoxes; ++i, startX += invBoxDim + gap, first = false) {
+    for (uint8_t i=0; i<INV_SLOT_NUM; ++i, startX += invBoxDim + INV_SLOT_GAP, first = false) {
         startXArr[i] = startX;
 
         if (first) {
-            int id = em.addEntity(Rect(startX, y, invBoxDim, invBoxDim, COLOR_INV_BG));
+            uint32_t id = em.addEntity(Rect(startX, y, invBoxDim, invBoxDim, COLOR_INV_BG));
             globalState.utilBeltEntityIdStart = id;
             continue;
         }
@@ -828,4 +886,13 @@ void setupEntities() {
     em.addEntity(Img(startXArr[2], y, invBoxDim, invBoxDim, pistol));
     em.addEntity(Img(startXArr[3], y, invBoxDim, invBoxDim, furnace));
 }
+
+#undef INV_OUTER_BOX_COLOR
+#undef INV_SLOT_DIMENSION
+#undef INV_SLOT_NUM
+#undef INV_SLOT_GAP
+#undef INV_SLOT_GAP
+#undef INV_SLOT_START_X
+#undef E
+#undef ADD
 

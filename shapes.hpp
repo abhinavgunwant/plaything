@@ -89,7 +89,7 @@ Shape2D Text(char* text, int x, int y, int fontSize, Color color);
 Shape2D Text(string text, int x, int y, int fontSize, Color color);
 Shape2D Text(char* text, int x, int y, Color color);
 Shape2D Line2D(int startX, int startY, int endX, int endY, Color color);
-Shape2D Rect(int startX, int startY, int endX, int endY, Color color);
+Shape2D Rect(int x, int y, int width, int height, Color color);
 Shape2D Img(int x, int y, int width, int height, Image invImage);
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color);

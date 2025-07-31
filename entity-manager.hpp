@@ -93,6 +93,7 @@ private:
     unordered_map<string, uint32_t> itemMenuMap;
     float menuBlockTimer;
     FurnaceSystem furnaceSystem;
+    bool inventoryMenuBlocked;
 
 	void initCamera();
     void init();
@@ -104,6 +105,7 @@ private:
      * As of now only works for Entity3D with `item` field set.
      */
     void handleSystemEntityInit(Entity3D entity, uint32_t id);
+    void deleteMenuEntities();
 
 public:
 	EntityManager();
@@ -119,7 +121,8 @@ public:
 	uint32_t addEntity(string text, int x = 10, int y = 10, Color color = GRAY);
 	uint32_t addEntity(Shape2D shape);
 	uint32_t addEntity(Shape2D &shape);
-    void deleteEntity(uint32_t id);
+    bool deleteEntity(uint32_t id);
+    void deleteEntities(vector<uint32_t> ids);
 
     /** Gets the closest entity that's been clicked on upto `maxDistance`. */
     EntityCollision getRayCastCollision(EntityCollisionType type, float maxDistance);
@@ -138,6 +141,10 @@ public:
     bool isEntityInteractiveMenuShown();
     uint32_t getItemMenuEntityId(string key);
     void updateItemMenuText(string key, string newText);
+    void showInventoryMenu();
+    void hideInventoryMenu();
+    bool isInventoryMenuShown();
+    bool isInventoryMenuBlocked();
 
     void update2DEntity(uint32_t id, Entity2D newEntity);
     void update3DEntity(uint32_t id, Entity3D newEntity);

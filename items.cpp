@@ -146,14 +146,25 @@ void Item::onRightClick() {
     }
 }
 
-void Item::onUse() {
+void Item::onUse(uint32_t entityId) {
     cout << "\nInside Item::onUse()";
     switch (type) {
         case ITEM_BLUEPRINT: break;
         case ITEM_HAMMER: break;
         case ITEM_ASSAULT_RIFLE: break;
         case ITEM_PISTOL: break;
-        case ITEM_FURNACE: printState(); break;
+        case ITEM_FURNACE: {
+            printState();
+
+            if (em.isEntityInteractiveMenuShown()) {
+                em.hideEntityInteractionMenu();
+                em.hideInventoryMenu();
+            } else {
+                em.showEntityInteractionMenu(entityId);
+                em.showInventoryMenu();
+            }
+            break;
+        }
         default: return;
     }
 }

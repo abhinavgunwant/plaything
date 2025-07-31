@@ -108,7 +108,14 @@ class Item {
         void onClick();
         void onRightClick();
         void onKeyPress();
-        void onUse();
+        /**
+         * Controls what happens when user presses the `E` key.
+         *
+         * ## params
+         * - entityId - the entity id of the entity on which the user pressed
+         *   `E`.
+         */
+        void onUse(uint32_t entityId);
         void printState();
 };
 

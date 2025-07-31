@@ -103,35 +103,20 @@ void processInputs() {
             Entity3D e = em.get3DEntity(ec.entityId);
 
             if (e.item.type != ITEM_NONE && !em.isEntityBlocked(ec.entityId)) {
-                e.item.onUse();
+                e.item.onUse(ec.entityId);
                 em.blockEntityInteraction(ec.entityId);
-
-                // TODO: find a better place for this code!
-                switch (e.item.type) {
-                    case ITEM_FURNACE: {
-                        if (em.isEntityInteractiveMenuShown()) {
-                            em.hideEntityInteractionMenu();
-                        } else {
-                            em.showEntityInteractionMenu(ec.entityId);
-                        }
-                        break;
-                    }
-                        
-                    default: break;
-                }
             } else {
                 cout << " Entity is temporarily blocked from using.";
             }
         }
     }
 
-    // TODO: replace this code with inventory menu
-    // if (IsKeyDown(KEY_TAB)) {
-    //     if (em.isEntityInteractiveMenuShown()) {
-    //         em.hideEntityInteractionMenu();
-    //     } else {
-    //         em.showEntityInteractionMenu(ec.entityId);
-    //     }
-    // }
+    if (IsKeyDown(KEY_TAB) && !em.isInventoryMenuBlocked()) {
+        if (em.isInventoryMenuShown()) {
+            em.hideInventoryMenu();
+        } else {
+            em.showInventoryMenu();
+        }
+    }
 }
 
