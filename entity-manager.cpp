@@ -4,6 +4,7 @@
 #include <limits>
 #include <string>
 #include <cstring>
+#include <cmath>
 
 #include "items.hpp"
 #include "raylib.h"
@@ -17,6 +18,24 @@
 using namespace std;
 
 BoundingBox bb = { VEC_ZERO, VEC_ZERO };
+
+BoundingBox getBBForCube(Vector3 position, CubeData cubeData) {
+    float w_2 = cubeData.width/2;
+    float l_2 = cubeData.length/2;
+    float h_2 = cubeData.height/2;
+
+    float x1 = position.x - h_2;
+    float x2 = position.x + h_2;
+    float y1 = position.y - w_2;
+    float y2 = position.y + w_2;
+    float z1 = position.z - l_2;
+    float z2 = position.z + l_2;
+
+    return BoundingBox {
+        { min(x1, x2), min(y1, y2), min(z1, z2) },
+        { max(x1, x2), max(y1, y2), max(z1, z2) }
+    };
+}
 
 // Entity2D declarations
 Entity2D::Entity2D() { this->id = 0; }
@@ -288,10 +307,11 @@ EntityCollision EntityManager::getRayCastCollision(
                 const float height_2 = s.shapeData.cubeData.height/2;
                 const float length_2 = s.shapeData.cubeData.length/2;
 
-                box = {
-                    { p.x - width_2, p.y - height_2, p.z - length_2 },
-                    { p.x + width_2, p.y + height_2, p.z + length_2 }
-                };
+                // box = {
+                //     { p.x - width_2, p.y - height_2, p.z - length_2 },
+                //     { p.x + width_2, p.y + height_2, p.z + length_2 }
+                // };
+                box = getBBForCube(p, s.shapeData.cubeData);
                 bb = box;
             } else {
                 continue;
@@ -790,13 +810,6 @@ void setupEntities() {
 
     // Setup utility belt
     // Hammer
-    // ItemData* furnaceData = new ItemData();
-    // furnaceData->furnace = {
-    //     0, { 0, 0 }, { 0, 0, 0 },
-    //     { FARM_ITEM_NONE, FARM_ITEM_NONE },
-    //     { FARM_ITEM_NONE, FARM_ITEM_NONE, FARM_ITEM_NONE }
-    // };
-    // furnaceItem->itemData = furnaceData;
 
     globalState.utilityItems[0] = Item(ITEM_HAMMER);
     globalState.utilityItems[1] = Item(ITEM_BLUEPRINT);

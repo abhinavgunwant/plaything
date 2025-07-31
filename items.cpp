@@ -100,7 +100,8 @@ void Item::onClick() {
             EntityCollision ec = em.getRayCastCollision(ECT_TERRAIN, 1000);
 
             if (ec.entityId != 0 && ec.collision.hit) {
-                Entity3D furnaceEntity = Entity3D(em.lastId() + 1, Cube(ec.collision.point, 1, 5, 2, ORANGE));
+                Vector3 spawnPoint = ec.collision.point;
+                Entity3D furnaceEntity = Entity3D(em.lastId() + 1, Cube(spawnPoint, 1, 5, 2, ORANGE));
                 Item furnaceItem = Item(ITEM_FURNACE);
 
                 furnaceItem.itemData.furnace = DEMO_FURNACE(
