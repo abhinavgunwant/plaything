@@ -2,6 +2,7 @@
 
 #include "systems.hpp"
 #include "entity-manager.hpp"
+#include "inventory-manager.hpp"
 #include "game-state.hpp"
 
 using namespace std;
@@ -26,20 +27,20 @@ void furnaceCook(
                         ++out[i];\
                         if (inUse) {\
                             cout<<"\n!! out"<<i+1<<"Qty: "<<out[i];\
-                            em.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
+                            im.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
                         }\
                         break;\
                     } else if (outTypes[i] == FARM_ITEM_NONE) {\
                         outTypes[i] = type; out[i] = 1;\
                         if (inUse) {\
                             cout<<"\n!! out"<<i+1<<"Qty: "<<out[i];\
-                            em.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
+                            im.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
                         }\
                         break;\
                     }\
                 }\
                 if (inUse) {\
-                    em.updateItemMenuText(KEY("ore", j), XSTR(qty[j]));\
+                    im.updateItemMenuText(KEY("ore", j), XSTR(qty[j]));\
                 }\
             } else { health[j] = 0; }\
         }\
@@ -68,7 +69,6 @@ void furnaceCook(
 void FurnaceSystem::run(float frameTime) {
     if (ids.empty()) { return; }
 
-
     const float frameTime_ = frameTime * 255;
     const uint8_t sulfurHealthDelta = frameTime_;
     const uint8_t woodHealthDelta = 0.8 * frameTime_;
@@ -94,7 +94,7 @@ void FurnaceSystem::run(float frameTime) {
             continue;
         }
 
-        bool inUse = globalState.itemIdInUse == e.getId();
+        bool inUse = em.entityIdInUse == e.getId();
 
         #define WOOD            e.item.itemData.furnace.woodQty
         #define WOOD_HEALTH     e.item.itemData.furnace.woodHealth
@@ -126,21 +126,21 @@ void FurnaceSystem::run(float frameTime) {
                         if (outTypes[i] == FARM_ITEM_CHARCOAL && out[i] < 1000) {
                             ++out[i];
                             if (inUse) {
-                                em.updateItemMenuText(KEY("out", i), XSTR(out[i]));
+                                im.updateItemMenuText(KEY("out", i), XSTR(out[i]));
                             }
                             break;
                         } else if (outTypes[i] == FARM_ITEM_NONE) {
                             out[i] = 1;
                             outTypes[i] = FARM_ITEM_CHARCOAL;
                             if (inUse) {
-                                em.updateItemMenuText(KEY("out", i), XSTR(out[i]));
+                                im.updateItemMenuText(KEY("out", i), XSTR(out[i]));
                             }
                             break;
                         }
                     }
 
-                    if (globalState.itemIdInUse == id) {
-                        em.updateItemMenuText("woodQty", "x"+to_string(wQty));
+                    if (inUse) {
+                        im.updateItemMenuText("woodQty", "x"+to_string(wQty));
                     }
                 }
 

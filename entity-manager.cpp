@@ -10,6 +10,7 @@
 #include "common.hpp"
 #include "shapes.hpp"
 #include "entity-manager.hpp"
+#include "inventory-manager.hpp"
 #include "shapes.hpp"
 #include "game-state.hpp"
 
@@ -18,12 +19,11 @@
 #define INV_ROWS 4
 #define INV_SLOT_NUM 6
 #define INV_SLOT_GAP 10
-#define INV_SLOT_START_X (SCREEN_WIDTH - 6 * INV_SLOT_DIMENSION - INV_SLOT_GAP * (INV_SLOT_NUM - 1)) / 2
 
-#define UTIL_BOX_Y SCREEN_HEIGHT - invBoxDim - INV_SLOT_GAP
+#define ADD_MENU(x)      menuEntityIds.push_back(x)
+// #define INV_SLOT_START_X (SCREEN_WIDTH - 6 * INV_SLOT_DIMENSION - INV_SLOT_GAP * (INV_SLOT_NUM - 1)) / 2
 
-#define ADD(x)      menuEntityIds.push_back(x)
-#define E           em.addEntity
+// #define UTIL_BOX_Y SCREEN_HEIGHT - invBoxDim - INV_SLOT_GAP
 
 using namespace std;
 
@@ -137,6 +137,7 @@ EntityManager::EntityManager() { init(); }
 
 void EntityManager::init() {
     idCounter = 1;
+    entityIdInUse = 0;
 
     entities2d.reserve(128);
     entities3d.reserve(256);
@@ -431,214 +432,13 @@ bool EntityManager::isEntityBlocked(uint32_t id) {
     return false;
 }
 
-// TODO: reimplement this!
-void EntityManager::showEntityInteractionMenu(uint32_t id) {
-    if (menuBlockTimer > 0) { return; }
-    cout << "\nshowing menu";
-
-    menuBlockTimer = 0.25;
-    EnableCursor();
-
-    Entity3D entity = get3DEntity(id);
-    Color base = { 255, 255, 255, 80 };
-    int xOffset = 1120;
-
-    globalState.itemIdInUse = id;
-
-    switch (entity.item.type) {
-        case ITEM_FURNACE: {
-            #define FURNACE     entity.item.itemData.furnace
-            #define KEY(a, b)   a + to_string(b+1) + "Qty"
-            #define QTY(a)      "x" + to_string((int) FURNACE.a)
-
-            const uint16_t d = INV_SLOT_DIMENSION;
-            ADD(E(Rect(xOffset, 200, 400, 500, INV_OUTER_BOX_COLOR)));
-            ADD(E("Furnace", xOffset + 160, 210, WHITE));
-
-            ADD(E("Wood:", xOffset + 175, 240, WHITE));
-            ADD(E(Rect(xOffset + 155, 260, d, d, base)));
-
-            ADD(E("Input:", xOffset + 170, 360, WHITE));
-            ADD(E(Rect(xOffset + 105, 380, d, d, base)));
-            ADD(E(Rect(xOffset + 205, 380, d, d, base)));
-
-            ADD(E("Output:", xOffset + 165, 480, WHITE));
-            ADD(E(Rect(xOffset + 55, 500, d, d, base)));
-            ADD(E(Rect(xOffset + 155, 500, d, d, base)));
-            ADD(E(Rect(xOffset + 255, 500, d, d, base)));
-
-            if (FURNACE.woodQty > 0) {
-                uint32_t woodId = E(QTY(woodQty), xOffset + 155, 330, 20, WHITE);
-                ADD(woodId);
-                itemMenuMap["woodQty"] = woodId;
-
-                Image wood = LoadImage("./assets/wood_invIcon.png");
-                ADD(E(Img(xOffset + 155, 260, d, d, wood)));
-            }
-
-            for (
-                int i=0, offset1 = xOffset + 105, offset2 = xOffset + 55;
-                i<3;
-                ++i, offset1 += 100, offset2 += 100
-            ) {
-                if (FURNACE.outputQty[i] > 0) {
-                    switch(FURNACE.outputTypes[i]) {
-                        case FARM_ITEM_METAL_FRAGS: {
-                            Image metalFrags = LoadImage("./assets/metalFrags_invIcon.png");
-                            ADD(E(Img(offset2, 500, d, d, metalFrags)));
-                            break;
-                        }
-                        case FARM_ITEM_CHARCOAL: {
-                            Image charcoal = LoadImage("./assets/charcoal_invIcon.png");
-                            ADD(E(Img(offset2, 500, d, d, charcoal)));
-                            break;
-                        }
-                        default: continue;
-                    }
-
-                    uint32_t id1 = E(QTY(outputQty[i]), offset2, 570, WHITE);
-                    
-                    itemMenuMap[KEY("out", i)] = id1;
-                    ADD(id1);
-                }
-
-                if (i > 1) { continue; }
-
-                if (FURNACE.oreQty[i] > 0) {
-                    switch(FURNACE.oreTypes[i]) {
-                        case FARM_ITEM_METAL_ORE: {
-                            Image metalOre = LoadImage("./assets/metalOre_invIcon.png");
-                            ADD(E(Img(offset1, 380, d, d, metalOre)));
-                            break;
-                        }
-                        default: continue;
-                    }
-
-                    uint32_t id2 = E(QTY(oreQty[i]), offset1, 450, WHITE);
-                    itemMenuMap[KEY("ore", i)] = id2;
-                    ADD(id2);
-                }
-            }
-
-
-            if (FURNACE.on) {
-                ADD(E("Turn Off", xOffset + 155, 630, WHITE));
-                ADD(E(Rect(xOffset + 145, 600, 110, d, { 255, 0, 0, 160 })));
-            } else {
-                ADD(E("Turn On", xOffset + 155, 630, WHITE));
-                ADD(E(Rect(xOffset + 155, 600, d, d, { 255, 0, 0, 160 })));
-            }
-
-            #undef KEY
-            #undef QTY
-            #undef FURNACE
-            break;
-        }
-        default: break;
-    }
-}
-
-void EntityManager::hideEntityInteractionMenu() {
-    if (menuBlockTimer > 0) { return; }
-    cout << "\nhiding menu";
-
-    DisableCursor();
-    menuBlockTimer = 0.25;
-
-    deleteMenuEntities();
-    globalState.itemIdInUse = 0;
-    itemMenuMap.clear();
-}
-
-bool EntityManager::isEntityInteractiveMenuShown() { return !menuEntityIds.empty(); }
-
-uint32_t EntityManager::getItemMenuEntityId(string key) {
-    if (itemMenuMap.find(key) != itemMenuMap.end()) {
-        return itemMenuMap[key];
-    }
-
-    return 0;
-}
-
-void EntityManager::updateItemMenuText(string key, string newText) {
-    uint32_t id = getItemMenuEntityId(key);
-
-    if (id == 0) { return; }
-
-    Entity2D e = get2DEntity(id);
-
-    #define TEXT_DATA   s.shapeData.textData
-
-    if (!e.shapes.empty() && (*(e.shapes.begin())).type == SHAPE_2D_TEXT) {
-        Shape2D s = (*(e.shapes.begin()));
-
-        em.update2DEntity(
-            id,
-            Entity2D(id, newText, s.x, s.y, TEXT_DATA.fontSize, TEXT_DATA.color)
-        );
-    }
-
-    #undef TEXT_DATA
-}
-
-void EntityManager::showInventoryMenu() {
-    menuBlockTimer = 0.25;
-    inventoryMenuBlocked = true;
-    EnableCursor();
-
-    // cout << "showing menu";
-
-    const uint16_t dim = INV_SLOT_DIMENSION;
-    const uint16_t dimGap = dim + INV_SLOT_GAP;
-    const uint16_t xStart = INV_SLOT_START_X;
-    const uint16_t xEnd = INV_SLOT_START_X + dimGap * 6 - INV_SLOT_GAP;
-    const uint16_t yEnd = SCREEN_HEIGHT - dimGap * 2;
-    const uint16_t yStart = yEnd - (INV_SLOT_GAP + dim)*4;
-
-    const uint16_t outerBoxX = dimGap * 6 + INV_SLOT_GAP;
-    const uint16_t outerBoxY = dimGap * 5 + INV_SLOT_GAP;
-
-    ADD(E(Rect(xStart - INV_SLOT_GAP, yStart - INV_SLOT_GAP, outerBoxX, outerBoxY, INV_OUTER_BOX_COLOR)));
-
-    for (uint16_t y = yStart; y <= yEnd; y += dimGap) {
-        for (uint16_t x = xStart; x <= xEnd; x += dimGap) {
-            ADD(E(Rect(x, y, dim, dim, { 0, 0, 0, 160 })));
-        }
-    }
-}
-
 void EntityManager::deleteMenuEntities() {
     deleteEntities(menuEntityIds);
 
     menuEntityIds.clear();
 }
 
-void EntityManager::hideInventoryMenu() {
-    if (menuBlockTimer > 0) { return; }
-
-    menuBlockTimer = 0.25;
-    inventoryMenuBlocked = true;
-
-    cout << "\nhiding menu";
-
-    DisableCursor();
-
-    deleteMenuEntities();
-    globalState.itemIdInUse = 0;
-    itemMenuMap.clear();
-}
-
-bool EntityManager::isInventoryMenuShown() { return isEntityInteractiveMenuShown(); }
-bool EntityManager::isInventoryMenuBlocked() { return inventoryMenuBlocked; }
-
 void EntityManager::updateEntityInteraction(float time) {
-    if (menuBlockTimer > 0) {
-        menuBlockTimer -= time;
-    } else if (menuBlockTimer <= 0) {
-        menuBlockTimer = 0;
-        inventoryMenuBlocked = false;
-    }
-
     if (blockedEntities.empty() && !inventoryMenuBlocked) { return; }
 
     bool runAgain;
@@ -812,9 +612,10 @@ void EntityManager::manageEntities() {
 
     drawEntities();
     updateEntityInteraction(frameTime);
+    im.updateMenuInteraction(frameTime);
     runSystems(frameTime);
 
-    if (!em.isEntityInteractiveMenuShown()) {
+    if (!im.isEntityMenuShown() && !im.isInventoryShown()) {
         UpdateCamera(em.getCamera(), CAMERA_FIRST_PERSON);
     }
 }
@@ -846,53 +647,14 @@ void setupEntities() {
 
     // GUI
     // Draw inventory boxes for utility belt
-    const uint16_t invBoxDim = INV_SLOT_DIMENSION;
-    const uint16_t y = UTIL_BOX_Y;
-    uint16_t startX = INV_SLOT_START_X;
-
-    bool first = true;
-
-    int startXArr[6];
-
-    for (uint8_t i=0; i<INV_SLOT_NUM; ++i, startX += invBoxDim + INV_SLOT_GAP, first = false) {
-        startXArr[i] = startX;
-
-        if (first) {
-            uint32_t id = em.addEntity(Rect(startX, y, invBoxDim, invBoxDim, COLOR_INV_BG));
-            globalState.utilBeltEntityIdStart = id;
-            continue;
-        }
-
-        em.addEntity(Rect(startX, y, invBoxDim, invBoxDim, COLOR_INV_BG));
-    }
-
-    // Setup utility belt
-    // Hammer
-
-    globalState.utilityItems[0] = Item(ITEM_HAMMER);
-    globalState.utilityItems[1] = Item(ITEM_BLUEPRINT);
-    globalState.utilityItems[2] = Item(ITEM_PISTOL);
-    globalState.utilityItems[3] = Item(ITEM_FURNACE);
-    globalState.utilityItems[4] = Item(ITEM_NONE);
-    globalState.utilityItems[5] = Item(ITEM_NONE);
-
-    Image hammer = LoadImage("./assets/hammer_invIcon.png");
-    Image blueprint = LoadImage("./assets/blueprint_invIcon.png");
-    Image pistol = LoadImage("./assets/pistol_invIcon.png");
-    Image furnace = LoadImage("./assets/furnace_invIcon.png");
-
-    em.addEntity(Img(startXArr[0], y, invBoxDim, invBoxDim, hammer));
-    em.addEntity(Img(startXArr[1], y, invBoxDim, invBoxDim, blueprint));
-    em.addEntity(Img(startXArr[2], y, invBoxDim, invBoxDim, pistol));
-    em.addEntity(Img(startXArr[3], y, invBoxDim, invBoxDim, furnace));
+    im.showUtilityBelt();
 }
 
+#undef ADD_MENU
 #undef INV_OUTER_BOX_COLOR
 #undef INV_SLOT_DIMENSION
 #undef INV_SLOT_NUM
 #undef INV_SLOT_GAP
 #undef INV_SLOT_GAP
 #undef INV_SLOT_START_X
-#undef E
-#undef ADD
 

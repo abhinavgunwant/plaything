@@ -4,10 +4,25 @@
 
 #include "common.hpp"
 #include "entity-manager.hpp"
+#include "inventory-manager.hpp"
 #include "shapes.hpp"
 #include "items.hpp"
 
 using namespace std;
+
+string iconPaths[]= {
+    "",
+    "./assets/blueprint_invIcon.png",
+    "./assets/hammer_invIcon.png",
+    "",
+    "./assets/pistol_invIcon.png",
+    "./assets/furnace_invIcon.png",
+    "",
+    "",
+    "",
+    "",
+    "",
+};
 
 Item::Item() {
     type = ITEM_NONE;
@@ -36,6 +51,8 @@ Item::Item(ItemType type) {
 Item::~Item() { }
 
 void Item::onClick() {
+    if (im.isInventoryShown()) { return; }
+
     switch (this->type) {
         case ITEM_BLUEPRINT: {
             cout << "\nPlace building unit.";
@@ -156,12 +173,11 @@ void Item::onUse(uint32_t entityId) {
         case ITEM_FURNACE: {
             printState();
 
-            if (em.isEntityInteractiveMenuShown()) {
-                em.hideEntityInteractionMenu();
-                em.hideInventoryMenu();
+            if (im.isInventoryShown()) {
+                im.hideEntityInteractionMenu();
+                im.hideInventoryMenu();
             } else {
-                em.showEntityInteractionMenu(entityId);
-                em.showInventoryMenu();
+                im.showEntityInteractionMenu(entityId);
             }
             break;
         }

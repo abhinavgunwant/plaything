@@ -3,6 +3,7 @@
 
 #include "process-inputs.hpp"
 #include "entity-manager.hpp"
+#include "inventory-manager.hpp"
 #include "game-state.hpp"
 #include "common.hpp"
 
@@ -30,59 +31,30 @@ void processInputs() {
         // cout << "\nMousewheel: ";
         short prevIndex = globalState.utilBeltActiveIndex;
 
+        int8_t index = im.getUbIndex();
+
         if (mouseWheelMove > 0) {
             // cout<<" up";
-            if (globalState.utilBeltActiveIndex == -1) {
-                globalState.utilBeltActiveIndex = 5;
+            if (index == -1) {
+                index = 5;
             } else {
-                globalState.utilBeltActiveIndex -= 1;
+                --index;
             }
         } else {
             // cout<<" down";
-            if (globalState.utilBeltActiveIndex == 5) {
-                globalState.utilBeltActiveIndex = -1;
+            if (index == 5) {
+                index = -1;
             } else {
-                globalState.utilBeltActiveIndex += 1;
+                ++index;
             }
         }
 
-        // cout << "\nUtil belt active index: " << globalState.utilBeltActiveIndex;
-        // cout << "\nUtil belt previous index: " << prevIndex;
-
-        if (globalState.utilBeltActiveIndex != -1) {
-            const int entityId = globalState.utilBeltEntityIdStart + globalState.utilBeltActiveIndex;
-            Entity2D activeInvItem = em.get2DEntity(entityId);
-
-            if (activeInvItem.getId() != 0) {
-                try {
-                    (*activeInvItem.shapes.begin()).shapeData.dimensionData.color = COLOR_INV_BG_ACTIVE;
-                    em.update2DEntity(activeInvItem.getId(), activeInvItem);
-                } catch (exception &e) {
-                    cout << "\nException 1: " << e.what() << " total items: "
-                        << activeInvItem.shapes.size();
-                }
-            }
-        }
-
-        if (prevIndex != -1) {
-            const int entityId = globalState.utilBeltEntityIdStart + prevIndex;
-            Entity2D prevItem = em.get2DEntity(entityId);
-
-            if (prevItem.getId() != 0) {
-                try {
-                    (*prevItem.shapes.begin()).shapeData.dimensionData.color = COLOR_INV_BG;
-                    em.update2DEntity(prevItem.getId(), prevItem);
-                } catch (exception &e) {
-                    cout << "\nException 1: " << e.what() << " total items: "
-                        << prevItem.shapes.size();
-                }
-            }
-        }
+        im.setUbIndex(index);
     }
 
     // Check if user is using an item from utility belt
-    if (globalState.utilBeltActiveIndex >= 0 && globalState.utilBeltActiveIndex < 6) {
-        Item item = globalState.utilityItems[globalState.utilBeltActiveIndex];
+    if (im.isUbActive()) {
+        Item item = im.getActiveUbItem();
 
         if (item.type != ITEM_NONE) {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -111,11 +83,11 @@ void processInputs() {
         }
     }
 
-    if (IsKeyDown(KEY_TAB) && !em.isInventoryMenuBlocked()) {
-        if (em.isInventoryMenuShown()) {
-            em.hideInventoryMenu();
+    if (IsKeyDown(KEY_TAB) && !im.isInventoryMenuBlocked()) {
+        if (im.isInventoryShown()) {
+            im.hideInventoryMenu();
         } else {
-            em.showInventoryMenu();
+            im.showInventoryMenu();
         }
     }
 }

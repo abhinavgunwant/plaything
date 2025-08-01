@@ -1,6 +1,8 @@
 #ifndef PLAYTHING_GAME_STATE
 #define PLAYTHING_GAME_STATE
 
+#include "raylib.h"
+
 #include "items.hpp"
 
 struct State {
@@ -12,9 +14,6 @@ struct State {
      */
     int utilBeltEntityIdStart;
 
-    /**
-     * Array of items in the utility belt.
-     */
     Item utilityItems[6];
 
     /** The id of item that the user is currEntly using. `0` if none. */

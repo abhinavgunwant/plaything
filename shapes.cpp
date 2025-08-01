@@ -61,21 +61,24 @@ Shape2D Rect(int x, int y, int width, int height, Color color) {
     return { SHAPE_2D_RECTANGLE, (float)x, (float)y, dimensionShape(width, height, color) };
 }
 
-Shape2D Img(int x, int y, int width, int height, Image invImage) {
-    if (invImage.width != width) {
-        ImageResize(&invImage, width, invImage.height);
-        cout << "\nResizing image width " << invImage.width << " " << width;
-    }
-
-    if (invImage.height != height) {
-        ImageResize(&invImage, invImage.width, height);
-        cout << "\nResizing image height " << invImage.height << " " << height;
-    }
-
-    ImageData i = { width, height, LoadTextureFromImage(invImage) };
+Shape2D Img(int x, int y, int width, int height, Texture2D imageTexture) {
+    ImageData i = { width, height, imageTexture };
     Shape2DData s;
     s.imageData = i;
+
     return { SHAPE_2D_IMAGE, (float)x, (float)y, s };
+}
+
+Shape2D Img(int x, int y, int width, int height, Image image) {
+    return Img(x, y, width, height, imageToTexture(width, height, image) );
+}
+
+Shape2D Img(int x, int y, int width, int height, string imagePath) {
+    if (imagePath.empty()) { return { SHAPE_2D_NONE }; }
+
+    Image img = LoadImage(imagePath.c_str());
+
+    return Img(x, y, width, height, img);
 }
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color) {

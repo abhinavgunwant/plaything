@@ -10,6 +10,8 @@
 #include "shapes.hpp"
 #include "systems.hpp"
 
+#define ADD em.addEntity
+
 using namespace std;
 
 enum EntityType { ENTITY_TYPE_2D, ENTITY_TYPE_3D, };
@@ -109,6 +111,9 @@ private:
 
 public:
 	EntityManager();
+
+    uint32_t entityIdInUse;
+
 	inline void setCameraPosition(Vector3 position);
 	void updateCameraTarget(Vector3 target);
 	Camera3D* getCamera() { return &camera; }
@@ -136,15 +141,6 @@ public:
     /** updates the blockedEntities vector based on frame time that's passed */
     void updateEntityInteraction(float time);
     bool isEntityBlocked(uint32_t id);
-    void showEntityInteractionMenu(uint32_t);
-    void hideEntityInteractionMenu();
-    bool isEntityInteractiveMenuShown();
-    uint32_t getItemMenuEntityId(string key);
-    void updateItemMenuText(string key, string newText);
-    void showInventoryMenu();
-    void hideInventoryMenu();
-    bool isInventoryMenuShown();
-    bool isInventoryMenuBlocked();
 
     void update2DEntity(uint32_t id, Entity2D newEntity);
     void update3DEntity(uint32_t id, Entity3D newEntity);

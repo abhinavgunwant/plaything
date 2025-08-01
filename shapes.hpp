@@ -8,12 +8,14 @@
 using namespace std;
 
 enum Shape3DType {
+    SHAPE_3D_NONE,
 	SHAPE_3D_CUBE,
 	SHAPE_3D_LINE,
     SHAPE_3D_MESH,
 };
 
 enum Shape2DType {
+    SHAPE_2D_NONE,
     SHAPE_2D_TEXT,
     SHAPE_2D_LINE,
     SHAPE_2D_RECTANGLE,
@@ -90,7 +92,9 @@ Shape2D Text(string text, int x, int y, int fontSize, Color color);
 Shape2D Text(char* text, int x, int y, Color color);
 Shape2D Line2D(int startX, int startY, int endX, int endY, Color color);
 Shape2D Rect(int x, int y, int width, int height, Color color);
-Shape2D Img(int x, int y, int width, int height, Image invImage);
+Shape2D Img(int x, int y, int width, int height, Texture2D imageTexture);
+Shape2D Img(int x, int y, int width, int height, Image image);
+Shape2D Img(int x, int y, int width, int height, string imagePath);
 
 Shape3D Cube(Vector3 position, float width, float height, float length, Color color);
 Shape3D Line(Vector3 startPos, Vector3 endPos, Color color);

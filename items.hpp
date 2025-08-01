@@ -30,6 +30,8 @@ enum ItemType {
     ITEM_BUILDING_FOUNDATION,
 };
 
+extern string iconPaths[];
+
 /**
  * Types of items that can be farmed.
  */
