@@ -5,6 +5,7 @@
 #include "entity-manager.hpp"
 #include "inventory-manager.hpp"
 #include "game-state.hpp"
+#include "console.hpp"
 #include "common.hpp"
 
 void processInputs() {
@@ -28,9 +29,6 @@ void processInputs() {
     float mouseWheelMove = GetMouseWheelMove();
 
     if (mouseWheelMove != 0) {
-        // cout << "\nMousewheel: ";
-        short prevIndex = globalState.utilBeltActiveIndex;
-
         int8_t index = im.getUbIndex();
 
         if (mouseWheelMove > 0) {
@@ -67,28 +65,42 @@ void processInputs() {
         }
     }
 
-    if (IsKeyDown(KEY_E)) {
+    if (IsKeyPressed(KEY_E) && !(im.isInventoryShown() || im.isEntityMenuShown())) {
         EntityCollision ec = em.getRayCastCollision(ECT_OTHER, 10);
 
         if (ec.collision.hit) {
-            cout << "\nUse hit.";
+            // cout << "\nUse hit.";
             Entity3D e = em.get3DEntity(ec.entityId);
 
-            if (e.item.type != ITEM_NONE && !em.isEntityBlocked(ec.entityId)) {
+            if (e.item.type != ITEM_NONE) {
                 e.item.onUse(ec.entityId);
-                em.blockEntityInteraction(ec.entityId);
-            } else {
-                cout << " Entity is temporarily blocked from using.";
+                // em.blockEntityInteraction(ec.entityId);
+            // } else {
+            //     cout << " Entity is temporarily blocked from using.";
             }
         }
     }
 
-    if (IsKeyDown(KEY_TAB) && !im.isInventoryMenuBlocked()) {
+    if (IsKeyPressed(KEY_TAB)) {
         if (im.isInventoryShown()) {
             im.hideInventoryMenu();
         } else {
-            im.showInventoryMenu();
+            im.showInventoryMenu(true);
         }
+    }
+
+    if (IsKeyPressed(KEY_GRAVE)) {
+        if (globalState.consoleShown == true) {
+            globalState.consoleShown = false;
+            hideConsole();
+        } else {
+            globalState.consoleShown = true;
+            displayConsole();
+        }
+    }
+
+    if (globalState.consoleShown) {
+        handleConsoleInteraction();
     }
 }
 

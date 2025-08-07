@@ -136,6 +136,7 @@ void Entity3D::addShape(Shape3D &shape) { shapes.push_back(shape); }
 EntityManager::EntityManager() { init(); }
 
 void EntityManager::init() {
+    shouldUpdateCamera = true;
     idCounter = 1;
     entityIdInUse = 0;
 
@@ -171,6 +172,8 @@ inline void EntityManager::setCameraPosition(Vector3 position) {
 void EntityManager::updateCameraTarget(Vector3 target) {
     this->camera.target = target;
 }
+
+void EntityManager::updateCamera(bool should) { shouldUpdateCamera = should; }
 
 uint32_t EntityManager::addEntity(Entity3D entity) {
     if (entity.getId() == 0) {
@@ -253,6 +256,7 @@ uint32_t EntityManager::addEntity(Shape2D &shape) {
 }
 
 bool EntityManager::deleteEntity(uint32_t id) {
+    cout << "\nDeleting single entity with id: " << id;
     if (entities2d.empty() && entities3d.empty()) { return false; }
 
     try {
@@ -298,16 +302,89 @@ bool EntityManager::deleteEntity(uint32_t id) {
     return false;
 }
 
-void EntityManager::deleteEntities(vector<uint32_t> ids) {
+/**
+ * Both `start` and `end` entity ids are inclusive.
+ */
+void EntityManager::delete2DEntitiesRange(uint32_t start, uint32_t end) {
+    if (start > end) {
+        cout << "\nError: cannot delete in the range [" << start << ", " << end << "]";
+        return;
+    }
+
+    cout << "\n!!!! deleting, start: " << start << ", end: " << end;
+
+    vector<Entity2D>::iterator entityStart;
+    vector<Entity2D>::iterator entityEnd;
+
+    bool startFound = false;
+    bool endFound = false;
+
+    uint32_t id;
+
+    for (
+        vector<Entity2D>::iterator i = entities2d.begin();
+        !(startFound && endFound) && i != entities2d.end();
+        ++i) {
+        id = (*i).getId();
+
+        if (id == start) {
+            cout << "\nFound start: " << id;
+            startFound = true;
+            entityStart = i;
+            continue;
+        }
+
+        if (id == end) {
+            cout << "\nFound end: " << id;
+            endFound = true;
+            entityEnd = i + 1;
+        }
+    }
+
+    if (startFound && endFound) {
+        entities2d.erase(entityStart, entityEnd);
+        idCounter = start;
+    } else {
+        cout << "\nError: Neither start or end found to delete!";
+    }
+}
+
+void EntityManager::delete2DEntities(vector<uint32_t> ids) {
     vector<uint32_t> deletedEntities;
     deletedEntities.reserve(64);
 
     cout << "\nDeleting entities. ID counter at: " << idCounter;
 
-    for (vector<uint32_t>::reverse_iterator i = ids.rbegin(); i != ids.rend(); ++i) {
-        if (deleteEntity(*i)) {
-            deletedEntities.push_back(*i);
+    const uint32_t beginVal = (*(ids.begin()));
+    const uint32_t endVal = (*(ids.end() - 1));
+
+    uint32_t idCount = beginVal;
+    uint32_t start = beginVal;
+    uint32_t lastDeletedId = 0;
+    vector<uint32_t>::iterator breakItr = ids.begin();
+
+    for (vector<uint32_t>::iterator i = breakItr; i != ids.end(); ++i, ++idCount) {
+        if (*i != idCount) {
+            if (*i - start == 1) {
+                deleteEntity(*i);
+            } else {
+                delete2DEntitiesRange(start, *(i - 1));
+            }
+
+            lastDeletedId = *i;
+            idCount = *i;
+            start = *i;
         }
+
+        deletedEntities.push_back(*i);
+
+        // if (deleteEntity(*i)) {
+        //     deletedEntities.push_back(*i);
+        // }
+    }
+
+    if (lastDeletedId == 0 && start == beginVal || lastDeletedId != endVal) {
+        delete2DEntitiesRange(start, endVal);
     }
 
     cout << "\nDeleted entities: ";
@@ -380,88 +457,88 @@ Entity2D EntityManager::get2DEntity(uint32_t id) {
     return Entity2D(0);
 }
 
-void EntityManager::blockEntityInteraction(uint32_t id) {
-    Entity3D e = get3DEntity(id);
+// void EntityManager::blockEntityInteraction(uint32_t id) {
+//     Entity3D e = get3DEntity(id);
+// 
+//     if (e.item.type != ITEM_NONE) {
+//         for (
+//             vector<BlockedEntity>::iterator itr = blockedEntities.begin();
+//             itr < blockedEntities.end();
+//             ++itr
+//         ) {
+//             if ((*itr).id == id) {
+//                 cout << "\nReset the block timer for entity " << id << ".";
+//                 (*itr).time = 0.5;
+//                 return;
+//             }
+//         }
+// 
+//         cout << "\nAdded entitiy " << id << " to blocked list.";
+//         blockedEntities.push_back({ id, 0.5 });
+//     } else {
+//         cout << "\nItem was none!";
+//     }
+// }
 
-    if (e.item.type != ITEM_NONE) {
-        for (
-            vector<BlockedEntity>::iterator itr = blockedEntities.begin();
-            itr < blockedEntities.end();
-            ++itr
-        ) {
-            if ((*itr).id == id) {
-                cout << "\nReset the block timer for entity " << id << ".";
-                (*itr).time = 0.5;
-                return;
-            }
-        }
+// void EntityManager::allowEntityInteraction(uint32_t id) {
+//     if (blockedEntities.empty()) { return; }
+// 
+//     Entity3D e = get3DEntity(id);
+// 
+//     if (e.item.type != ITEM_NONE) {
+//         for (
+//             vector<BlockedEntity>::iterator itr = blockedEntities.begin();
+//             itr < blockedEntities.end();
+//             ++itr
+//         ) {
+//             if ((*itr).id == id) {
+//                 blockedEntities.erase(itr);
+//                 return;
+//             }
+//         }
+//     }
+// }
 
-        cout << "\nAdded entitiy " << id << " to blocked list.";
-        blockedEntities.push_back({ id, 0.5 });
-    } else {
-        cout << "\nItem was none!";
-    }
-}
-
-void EntityManager::allowEntityInteraction(uint32_t id) {
-    if (blockedEntities.empty()) { return; }
-
-    Entity3D e = get3DEntity(id);
-
-    if (e.item.type != ITEM_NONE) {
-        for (
-            vector<BlockedEntity>::iterator itr = blockedEntities.begin();
-            itr < blockedEntities.end();
-            ++itr
-        ) {
-            if ((*itr).id == id) {
-                blockedEntities.erase(itr);
-                return;
-            }
-        }
-    }
-}
-
-bool EntityManager::isEntityBlocked(uint32_t id) {
-    if (blockedEntities.empty()) { return false; }
-
-    for (BlockedEntity e : blockedEntities) {
-        if (e.id == id) { return true; }
-    }
-
-    return false;
-}
+// bool EntityManager::isEntityBlocked(uint32_t id) {
+//     if (blockedEntities.empty()) { return false; }
+// 
+//     for (BlockedEntity e : blockedEntities) {
+//         if (e.id == id) { return true; }
+//     }
+// 
+//     return false;
+// }
 
 void EntityManager::deleteMenuEntities() {
-    deleteEntities(menuEntityIds);
+    delete2DEntities(menuEntityIds);
 
     menuEntityIds.clear();
 }
 
-void EntityManager::updateEntityInteraction(float time) {
-    if (blockedEntities.empty() && !inventoryMenuBlocked) { return; }
-
-    bool runAgain;
-
-    do {
-        runAgain = false;
-
-        for (
-            vector<BlockedEntity>::iterator itr = blockedEntities.begin();
-            itr < blockedEntities.end();
-            ++itr
-        ) {
-            (*itr).time -= time;
-
-            if ((*itr).time < 0) {
-                cout << "\nRemoving entity " << (*itr).id << " from blocked list.";
-                blockedEntities.erase(itr);
-                runAgain = true;
-                break;
-            }
-        }
-    } while (runAgain);
-}
+// void EntityManager::updateEntityInteraction(float time) {
+//     if (blockedEntities.empty() && !inventoryMenuBlocked) { return; }
+// 
+//     bool runAgain;
+// 
+//     do {
+//         runAgain = false;
+// 
+//         for (
+//             vector<BlockedEntity>::iterator itr = blockedEntities.begin();
+//             itr < blockedEntities.end();
+//             ++itr
+//         ) {
+//             (*itr).time -= time;
+// 
+//             if ((*itr).time < 0) {
+//                 cout << "\nRemoving entity " << (*itr).id << " from blocked list.";
+//                 blockedEntities.erase(itr);
+//                 runAgain = true;
+//                 break;
+//             }
+//         }
+//     } while (runAgain);
+// }
 
 void EntityManager::update2DEntity(uint32_t id, Entity2D newEntity) {
     bool found = false;
@@ -611,11 +688,11 @@ void EntityManager::manageEntities() {
     float frameTime = GetFrameTime();
 
     drawEntities();
-    updateEntityInteraction(frameTime);
-    im.updateMenuInteraction(frameTime);
+    // updateEntityInteraction(frameTime);
+    // im.updateMenuInteraction(frameTime);
     runSystems(frameTime);
 
-    if (!im.isEntityMenuShown() && !im.isInventoryShown()) {
+    if (shouldUpdateCamera) {
         UpdateCamera(em.getCamera(), CAMERA_FIRST_PERSON);
     }
 }

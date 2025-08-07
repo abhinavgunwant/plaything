@@ -31,6 +31,8 @@ InventoryManager::InventoryManager() {
 }
 
 void InventoryManager::initUtilBelt() {
+    cout << "\nInitializing player's utility belt.";
+
     const uint16_t dim = INV_SLOT_DIMENSION;
 
     Item blueprintItem = Item(ITEM_BLUEPRINT);
@@ -72,7 +74,7 @@ uint32_t InventoryManager::getItemMenuEntityId(string key) {
 }
 
 void InventoryManager::updateItemMenuText(string key, string newText) {
-    cout << "\nupdating menu item text (" << key << ": " << newText;
+    // cout << "\nupdating menu item text (" << key << ": " << newText;
 
     uint32_t id = getItemMenuEntityId(key);
 
@@ -101,6 +103,8 @@ void InventoryManager::showUtilityBelt() {
     const uint16_t dimGap = dim + INV_SLOT_GAP;
     const uint16_t y = UTIL_BOX_Y;
 
+    cout << "\nUtil belt IDs: ";
+
     for (uint16_t i=0, x = INV_SLOT_START_X; i<UTIL_BELT_SLOTS; ++i, x += dimGap) {
         if (ubIndex == i) {
             // Active utility belt slot
@@ -108,12 +112,14 @@ void InventoryManager::showUtilityBelt() {
         } else {
             utilityBelt[i].rectEntityId = em.addEntity(INV_RECT(x, y, dim));
         }
+
         utilityBelt[i].imgEntityId = em.addEntity(UTIL_BELT_IMG(x, y, dim, i));
+        cout << utilityBelt[i].rectEntityId << ", " << utilityBelt[i].imgEntityId << ", ";
     }
 }
 
 void InventoryManager::hideUtilityBelt() {
-    em.deleteEntities({
+    em.delete2DEntities({
         utilityBelt[0].rectEntityId, utilityBelt[0].imgEntityId,
         utilityBelt[1].rectEntityId, utilityBelt[1].imgEntityId,
         utilityBelt[2].rectEntityId, utilityBelt[2].imgEntityId,
@@ -123,13 +129,56 @@ void InventoryManager::hideUtilityBelt() {
     });
 }
 
-void InventoryManager::showInventoryMenu() {
-    if (inventoryMenuBlocked) { return; }
+void InventoryManager::addToInventory(ItemType type, uint16_t qty) {
+    if (qty > INV_MAX_STACK) {
+        qty = INV_MAX_STACK;
+    }
 
+    // first find an inventory item with qty < INV_MAX_STACK
+    bool found;
+    uint8_t foundIndex = 0;
+
+    for (uint16_t i=0; i<INV_SLOTS; ++i) {
+        if (
+            userInventory[i].item.type == type
+            && userInventory[i].item.qty < INV_MAX_STACK
+        ) {
+            found = true;
+            foundIndex = i;
+        }
+    }
+
+
+    if (found) {
+        uint16_t change = INV_MAX_STACK - userInventory[foundIndex].item.qty;
+
+        if (change < qty) {
+            userInventory[foundIndex].item.qty = INV_MAX_STACK;
+            addToInventory(type, change);
+            return;
+        }
+
+        userInventory[foundIndex].item.qty += qty;
+        return;
+    }
+
+    for (uint16_t i=0; i<INV_SLOTS; ++i) {
+        if (userInventory[foundIndex].item.type == ITEM_NONE) {
+            userInventory[foundIndex].item.type = type;
+            userInventory[foundIndex].item.qty = qty;
+
+            // TODO: add inventory entities for this item
+            userInventory[foundIndex].imgEntityId = qty;
+
+            return;
+        }
+    }
+}
+
+void InventoryManager::showInventoryMenu(bool showUtil) {
     hideUtilityBelt();
 
-    menuBlockTimer = 0.25;
-    inventoryMenuBlocked = true;
+    em.updateCamera(false);
     EnableCursor();
 
     const uint16_t dim = INV_SLOT_DIMENSION;
@@ -144,45 +193,56 @@ void InventoryManager::showInventoryMenu() {
 
     ADD_MENU(ADD(Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, INV_OUTER_BOX_COLOR)));
 
-    for (uint16_t y = yStart; y <= yEnd; y += dimGap) {
-        for (uint16_t x = xStart; x <= xEnd; x += dimGap) {
-            ADD_MENU(ADD(Rect(x, y, dim, dim, COLOR_INV_BG)));
+    uint32_t e; // Just a temp variable
+
+    for (uint16_t y = yStart, i=0; y <= yEnd; y += dimGap) {
+        for (uint16_t x = xStart; x <= xEnd; x += dimGap, ++i) {
+            e = ADD(Rect(x, y, dim, dim, COLOR_INV_BG));
+            userInventory[i].rectEntityId = e;
+            ADD_MENU(e);
+
+            if (userInventory[i].item.type != ITEM_NONE) {
+                e = ADD(Img(x, y, dim, dim, userInventory[i].item.invImageTexture));
+                userInventory[i].rectEntityId = e;
+                ADD_MENU(e);
+            }
         }
     }
 
-    showUtilityBelt();
+    if (showUtil) {
+        showUtilityBelt();
+    }
+
     inventoryShown = true;
 }
 
 void InventoryManager::hideInventoryMenu() {
     hideUtilityBelt();
 
-    menuBlockTimer = 0.25;
-    inventoryMenuBlocked = true;
     DisableCursor();
 
-    em.deleteEntities(invMenuEntityIds);
+    em.updateCamera(true);
+    em.delete2DEntities(invMenuEntityIds);
     invMenuEntityIds.clear();
+    itemMenuMap.clear();
+
+    em.entityIdInUse = 0;
 
     showUtilityBelt();
     inventoryShown = false;
 }
 
 void InventoryManager::showEntityInteractionMenu(uint32_t id) {
-    if (inventoryMenuBlocked) { return; }
     cout << "\nshowing menu";
 
-    menuBlockTimer = 0.25;
-    EnableCursor();
-
     Entity3D entity = em.get3DEntity(id);
-    Color base = { 255, 255, 255, 80 };
+    const Color base = { 255, 255, 255, 80 };
     int xOffset = 1120;
 
+    em.updateCamera(false);
     em.entityIdInUse = id;
 
-    hideUtilityBelt();
-    showInventoryMenu();
+    showInventoryMenu(false);
 
     switch (entity.item.type) {
         case ITEM_FURNACE: {
@@ -275,19 +335,14 @@ void InventoryManager::showEntityInteractionMenu(uint32_t id) {
         default: break;
     }
 
+    showMenuEntityIDs();
     showUtilityBelt();
 }
 
-void InventoryManager::hideEntityInteractionMenu() {
-    if (menuBlockTimer > 0) { return; }
-    cout << "\nhiding menu";
+void InventoryManager::showMenuEntityIDs() {
+    cout << "\nInventory menu entity IDs: ";
 
-    DisableCursor();
-    menuBlockTimer = 0.25;
-
-    em.deleteEntities(invMenuEntityIds);
-    em.entityIdInUse = 0;
-    itemMenuMap.clear();
+    for (uint32_t id: invMenuEntityIds) { cout << id << ", "; }
 }
 
 int8_t InventoryManager::getUbIndex() { return ubIndex; }
@@ -322,18 +377,8 @@ void InventoryManager::setUbIndex(int8_t index) {
     }
 }
 
-void InventoryManager::updateMenuInteraction(float time) {
-    if (menuBlockTimer > 0) {
-        menuBlockTimer -= time;
-    } else if (menuBlockTimer <= 0) {
-        menuBlockTimer = 0;
-        inventoryMenuBlocked = false;
-    }
-}
-
 bool InventoryManager::isUbActive() { return ubIndex > -1 && ubIndex < 6; }
 bool InventoryManager::isInventoryShown() { return inventoryShown; }
-bool InventoryManager::isInventoryMenuBlocked() { return inventoryMenuBlocked; }
 bool InventoryManager::isEntityMenuShown() { return entityMenuShown; }
 
 Item InventoryManager::getActiveUbItem() {

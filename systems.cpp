@@ -12,7 +12,7 @@ using namespace std;
 
 void furnaceCook(
     uint8_t *health, uint8_t shd, uint8_t mhd, uint8_t hhd, uint16_t *qty,
-    FarmItemTypes * oreTypes, FarmItemTypes * outTypes, uint16_t *out,
+    ItemType * oreTypes, ItemType * outTypes, uint16_t *out,
     bool inUse
 ) {
 
@@ -30,7 +30,7 @@ void furnaceCook(
                             im.updateItemMenuText(KEY("out", i), XSTR(out[i]));\
                         }\
                         break;\
-                    } else if (outTypes[i] == FARM_ITEM_NONE) {\
+                    } else if (outTypes[i] == ITEM_NONE) {\
                         outTypes[i] = type; out[i] = 1;\
                         if (inUse) {\
                             cout<<"\n!! out"<<i+1<<"Qty: "<<out[i];\
@@ -57,9 +57,9 @@ void furnaceCook(
             default: break;
         }
 
-        if (qty[j] == 0 && health != 0 && oreTypes[j] != FARM_ITEM_NONE) {
+        if (qty[j] == 0 && health != 0 && oreTypes[j] != ITEM_NONE) {
             health = 0;
-            oreTypes[j] = FARM_ITEM_NONE;
+            oreTypes[j] = ITEM_NONE;
         }
     }
 
@@ -82,8 +82,8 @@ void FurnaceSystem::run(float frameTime) {
     uint16_t qty[2]; // ore quantities
     uint8_t health[2];
 
-    FarmItemTypes oreTypes[2];
-    FarmItemTypes outTypes[3];
+    ItemType oreTypes[2];
+    ItemType outTypes[3];
     uint16_t out[3];
 
     for (uint32_t id: ids) {
@@ -129,7 +129,7 @@ void FurnaceSystem::run(float frameTime) {
                                 im.updateItemMenuText(KEY("out", i), XSTR(out[i]));
                             }
                             break;
-                        } else if (outTypes[i] == FARM_ITEM_NONE) {
+                        } else if (outTypes[i] == ITEM_NONE) {
                             out[i] = 1;
                             outTypes[i] = FARM_ITEM_CHARCOAL;
                             if (inUse) {

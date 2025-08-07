@@ -6,13 +6,13 @@
 #include "raylib.h"
 
 #define DEFAULT_FURNACE { 0, 0, { 0, 0 }, { 0, 0 }, { 0, 0, 0 },\
-    { FARM_ITEM_NONE, FARM_ITEM_NONE },\
-    { FARM_ITEM_NONE, FARM_ITEM_NONE, FARM_ITEM_NONE }, false }
+    { ITEM_NONE, ITEM_NONE },\
+    { ITEM_NONE, ITEM_NONE, ITEM_NONE }, false }
 
 #define DEMO_FURNACE(wood, ore, output, outputType, charcoal, oreType, on) {\
     wood, 255, { ore, 0 }, { 255, 0 }, { output, charcoal, 0 },\
-    { oreType, FARM_ITEM_NONE },\
-    { outputType, FARM_ITEM_CHARCOAL, FARM_ITEM_NONE }, on }
+    { oreType, ITEM_NONE },\
+    { outputType, FARM_ITEM_CHARCOAL, ITEM_NONE }, on }
 
 using namespace std;
 
@@ -28,15 +28,8 @@ enum ItemType {
     ITEM_NODE_METAL,
     ITEM_NODE_SULFUR,
     ITEM_BUILDING_FOUNDATION,
-};
-
-extern string iconPaths[];
-
-/**
- * Types of items that can be farmed.
- */
-enum FarmItemTypes {
-    FARM_ITEM_NONE,
+    ITEM_STORAGE_BOX_SMALL,
+    ITEM_STORAGE_BOX_LARGE,
     FARM_ITEM_WOOD,
     FARM_ITEM_CHARCOAL,
     FARM_ITEM_STONES,
@@ -47,6 +40,8 @@ enum FarmItemTypes {
     FARM_ITEM_SULFUR_ORE,
     FARM_ITEM_SULFUR,
 };
+
+extern string iconPaths[];
 
 /**
  * Represents the ore node (or stone node).
@@ -72,10 +67,10 @@ struct Furnace {
     uint16_t outputQty[3];
 
     /** Types of ores in their respective slots. */
-    FarmItemTypes oreTypes[2];
+    ItemType oreTypes[2];
 
     /** Types of output items in their respective slots. */
-    FarmItemTypes outputTypes[3];
+    ItemType outputTypes[3];
 
     /** Whether the furnace is running */
     bool on;
@@ -94,8 +89,11 @@ class Item {
     public:
         ItemType type;
         Texture2D invImageTexture;
-        uint8_t clip;
-        uint8_t ammo;
+
+        uint16_t qty;
+
+        uint8_t clip; // TODO: remove
+        uint8_t ammo; // TODO: remove
 
         ItemData itemData;
 
@@ -107,6 +105,10 @@ class Item {
         Item(ItemType type, Image invImage); // TODO: if not needed, remove this. The invoice icon drawing is being taken care of by the entity manager
         ~Item();
 
+        void printState();
+
+        //// Following group of member functions work only while active in
+        //// utility belt.
         void onClick();
         void onRightClick();
         void onKeyPress();
@@ -118,10 +120,8 @@ class Item {
          *   `E`.
          */
         void onUse(uint32_t entityId);
-        void printState();
 };
 
-string getFarmItemName(FarmItemTypes type);
 string getItemTypeName(ItemType type);
 
 #endif

@@ -22,6 +22,8 @@ string iconPaths[]= {
     "",
     "",
     "",
+    "",
+    "",
 };
 
 Item::Item() {
@@ -173,12 +175,12 @@ void Item::onUse(uint32_t entityId) {
         case ITEM_FURNACE: {
             printState();
 
-            if (im.isInventoryShown()) {
-                im.hideEntityInteractionMenu();
-                im.hideInventoryMenu();
-            } else {
+            // if (im.isInventoryShown()) {
+            //     im.hideEntityInteractionMenu();
+            //     im.hideInventoryMenu();
+            // } else {
                 im.showEntityInteractionMenu(entityId);
-            }
+            // }
             break;
         }
         default: return;
@@ -216,21 +218,21 @@ void Item::printState() {
             cout << "\nFurnace { wood: { quantity: " << itemData.furnace.woodQty
                 << ", health: " << (int)itemData.furnace.woodHealth
                 << " }, ores: { slot1: { item: "
-                << getFarmItemName(itemData.furnace.oreTypes[0])
+                << getItemTypeName(itemData.furnace.oreTypes[0])
                 << ", health: " << (int)itemData.furnace.oreHealth[0]
                 << ", quantity: " << itemData.furnace.oreQty[0]
                 << " }, slot2: { item: "
-                << getFarmItemName(itemData.furnace.oreTypes[1])
+                << getItemTypeName(itemData.furnace.oreTypes[1])
                 << ", health: " << (int)itemData.furnace.oreHealth[1]
                 << ", quantity: " << itemData.furnace.oreQty[1]
                 << " } }, output: { slot1: { item: "
-                << getFarmItemName(itemData.furnace.outputTypes[0])
+                << getItemTypeName(itemData.furnace.outputTypes[0])
                 << ", quantity: " << itemData.furnace.outputQty[0]
                 << " }, slot2: { item: "
-                << getFarmItemName(itemData.furnace.outputTypes[1])
+                << getItemTypeName(itemData.furnace.outputTypes[1])
                 << ", quantity: " << itemData.furnace.outputQty[1]
                 << " }, slot3: { item: "
-                << getFarmItemName(itemData.furnace.outputTypes[2])
+                << getItemTypeName(itemData.furnace.outputTypes[2])
                 << ", quantity: " << itemData.furnace.outputQty[2]
                 << " }, on: " << itemData.furnace.on << " } }";
             break;
@@ -252,13 +254,6 @@ string getItemTypeName(ItemType type) {
         case ITEM_NODE_METAL: return "ITEM_NODE_METAL";
         case ITEM_NODE_SULFUR: return "ITEM_NODE_SULFUR";
         case ITEM_BUILDING_FOUNDATION: return "ITEM_BUILDING_FOUNDATION";
-        default: return "";
-    }
-}
-
-string getFarmItemName(FarmItemTypes type) {
-    switch (type) {
-        case FARM_ITEM_NONE: return "FARM_ITEM_NONE";
         case FARM_ITEM_WOOD: return "FARM_ITEM_WOOD";
         case FARM_ITEM_CHARCOAL: return "FARM_ITEM_CHARCOAL";
         case FARM_ITEM_STONES: return "FARM_ITEM_STONES";
@@ -268,6 +263,7 @@ string getFarmItemName(FarmItemTypes type) {
         case FARM_ITEM_HQM: return "FARM_ITEM_HQM";
         case FARM_ITEM_SULFUR_ORE: return "FARM_ITEM_SULFUR_ORE";
         case FARM_ITEM_SULFUR: return "FARM_ITEM_SULFUR";
+        default: return "";
     }
 }
 

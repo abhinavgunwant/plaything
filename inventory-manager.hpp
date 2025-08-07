@@ -11,8 +11,10 @@
 #define INV_OUTER_BOX_COLOR { 0, 0, 0, 160 }
 #define INV_SLOT_DIMENSION SCREEN_HEIGHT/10
 #define INV_ROWS 4
+#define INV_SLOTS 24
 #define INV_SLOTS_ROW 6
 #define INV_SLOT_GAP 10
+#define INV_MAX_STACK 1000
 #define INV_SLOT_START_X (SCREEN_WIDTH - 6 * INV_SLOT_DIMENSION - INV_SLOT_GAP * (INV_SLOTS_ROW - 1)) / 2
 #define INV_RECT(x, y, dim) Rect(x, y, dim, dim, COLOR_INV_BG)
 #define INV_RECTA(x, y, dim) Rect(x, y, dim, dim, COLOR_INV_BG_ACTIVE)
@@ -41,7 +43,6 @@ class InventoryManager {
     private:
         /** Index of the active utility belt item */
         int8_t ubIndex;
-        float menuBlockTimer;
 
         /** Contains the IDs of menu entities */
         vector<uint32_t> invMenuEntityIds;
@@ -50,10 +51,9 @@ class InventoryManager {
         bool ubInitPending;
         bool inventoryShown;
         bool entityMenuShown;
-        bool inventoryMenuBlocked;
 
-        InventorySlot utilityBelt[6];
-        InventorySlot userInventory[24];
+        InventorySlot utilityBelt[UTIL_BELT_SLOTS];
+        InventorySlot userInventory[INV_SLOTS];
 
         unordered_map<string, uint32_t> itemMenuMap;
 
@@ -66,22 +66,26 @@ class InventoryManager {
         uint32_t getItemMenuEntityId(string key);
         void updateItemMenuText(string key, string newText);
 
-        /** Shows inventory menu. */
-        void showInventoryMenu();
+        /**
+         * Shows inventory menu.
+         *
+         * #### params
+         * - `showUtil` whether to show utility belt. This is for better entity id record keeping.
+         */
+        void showInventoryMenu(bool showUtil);
 
         /** Hides inventory menu. */
         void hideInventoryMenu();
         void showEntityInteractionMenu(uint32_t);
-        void hideEntityInteractionMenu();
+        void showMenuEntityIDs();
         void showUtilityBelt();
         void hideUtilityBelt();
+        void addToInventory(ItemType type, uint16_t qty);
 
         int8_t getUbIndex();
 
         /** Set what item is active in the utility belt */
         void setUbIndex(int8_t index);
-
-        void updateMenuInteraction(float time);
 
         /** Whether any item in utility belt is active. */
         bool isUbActive();
@@ -89,7 +93,6 @@ class InventoryManager {
 
         bool isInventoryShown();
         bool isEntityMenuShown();
-        bool isInventoryMenuBlocked();
 };
 
 extern InventoryManager im;

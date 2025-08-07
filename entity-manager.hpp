@@ -25,10 +25,10 @@ struct EntityCollision {
     uint32_t entityId;
 };
 
-struct BlockedEntity {
-    uint32_t id;
-    float time;
-};
+// struct BlockedEntity {
+//     uint32_t id;
+//     float time;
+// };
 
 class Entity2D {
     private:
@@ -90,12 +90,13 @@ private:
 	Camera3D camera;
 	vector<Entity3D> entities3d;
 	vector<Entity2D> entities2d;
-    vector<BlockedEntity> blockedEntities;
+    // vector<BlockedEntity> blockedEntities;
     vector<uint32_t> menuEntityIds;
     unordered_map<string, uint32_t> itemMenuMap;
-    float menuBlockTimer;
+    // float menuBlockTimer;
     FurnaceSystem furnaceSystem;
-    bool inventoryMenuBlocked;
+    // bool inventoryMenuBlocked;
+    bool shouldUpdateCamera;
 
 	void initCamera();
     void init();
@@ -116,6 +117,7 @@ public:
 
 	inline void setCameraPosition(Vector3 position);
 	void updateCameraTarget(Vector3 target);
+	void updateCamera(bool should);
 	Camera3D* getCamera() { return &camera; }
 
 	uint32_t addEntity(Entity3D entity);
@@ -127,7 +129,8 @@ public:
 	uint32_t addEntity(Shape2D shape);
 	uint32_t addEntity(Shape2D &shape);
     bool deleteEntity(uint32_t id);
-    void deleteEntities(vector<uint32_t> ids);
+    void delete2DEntities(vector<uint32_t> ids);
+    void delete2DEntitiesRange(uint32_t start, uint32_t end);
 
     /** Gets the closest entity that's been clicked on upto `maxDistance`. */
     EntityCollision getRayCastCollision(EntityCollisionType type, float maxDistance);
@@ -136,11 +139,11 @@ public:
 	Entity2D get2DEntity(uint32_t id);
 
     // Interaction related methods.
-    void blockEntityInteraction(uint32_t id);
-    void allowEntityInteraction(uint32_t id);
+    // void blockEntityInteraction(uint32_t id);
+    // void allowEntityInteraction(uint32_t id);
     /** updates the blockedEntities vector based on frame time that's passed */
-    void updateEntityInteraction(float time);
-    bool isEntityBlocked(uint32_t id);
+    // void updateEntityInteraction(float time);
+    // bool isEntityBlocked(uint32_t id);
 
     void update2DEntity(uint32_t id, Entity2D newEntity);
     void update3DEntity(uint32_t id, Entity3D newEntity);
